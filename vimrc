@@ -27,7 +27,7 @@ Plug 'jiangmiao/auto-pairs'    "括号
 Plug 'neoclide/coc.nvim', {'branch': 'release'}    "自动补全
 Plug 'Chiel92/vim-autoformat' "自动格式化
 Plug 'mtdl9/vim-log-highlighting' "日志高亮
-
+Plug 'github/copilot.vim' "Github Copilot
 "一些主题
 Plug 'crusoexia/vim-monokai'
 Plug 'morhetz/gruvbox'

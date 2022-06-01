@@ -11,8 +11,10 @@ set laststatus=2 "显示状态栏
 set ambiwidth=double
 set t_Co=256
 set history=10000 "历史
-set autoindent    "自动缩进                                                                                                set cindent
-set tabstop=4     "tab长度                                                                                                set shiftwidth=4
+set autoindent    "自动缩进
+set cindent
+set tabstop=4     "tab长度
+set shiftwidth=4
 set incsearch
 set smartindent   "缩进
 set hlsearch

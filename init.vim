@@ -37,9 +37,12 @@ Plug 'Chiel92/vim-autoformat' "自动格式化
 Plug 'mtdl9/vim-log-highlighting' "日志高亮
 Plug 'github/copilot.vim' "Github Copilot
 Plug 'ZSaberLv0/ZFVimIM' "中文输入法
-Plug 'ZSaberLv0/ZFVimJob' " 可选, 用于提升词库加载性能
+Plug 'ZSaberLv0/ZFVimJob' "  用于提升词库加载性能
 Plug 'DreamOneX/ZFVimIM_pinyin_base' " 你的词库
-Plug 'ZSaberLv0/ZFVimIM_openapi' " 可选, 百度云输入法
+Plug 'ZSaberLv0/ZFVimIM_openapi' " 百度云输入法
+Plug 'easymotion/vim-easymotion' " 搜索
+Plug 'vim-scripts/gundo.vim' " 撤销
+
 "一些主题
 Plug 'crusoexia/vim-monokai'
 Plug 'morhetz/gruvbox'
@@ -141,20 +144,17 @@ colo atom-dark-256
 let g:copilot_node_command = "/usr/local/node16/bin/node"
 
 "ZFVimIm
-let g:zf_git_user_email='Git Email'
-let g:zf_git_user_name='Git Username'
-let g:zf_git_user_token='Github access token'
-
-function! s:myLocalDb()
-    let db = ZFVimIM_dbInit({
-                \   'name' : 'worddb',
-                \ })
-    call ZFVimIM_cloudRegister({
-                \   'mode' : 'local',
-                \   'dbId' : db['dbId'],
-                \   'repoPath' : '~/.vim/plugged/ZFVimIM_pinyin_base/misc', " 词库路径
-                \   'dbFile' : 'pinyin.txt', " 词库文件, 相对 repoPath 的路径
-				\   'dbCountFile' : 'pinyin_count.txt', " 非必须, 词频文件, 相对 repoPath 的路径
-                \ })
+let g:zf_git_user_email='me@dreamonex.ml'
+let g:zf_git_user_name='DreamOneX'
+let g:zf_git_user_token=''
+let &statusline='%{ZFVimIME_IMEStatusline()}'.&statusline
+function! ZF_Setting_cmdEdit()
+    let cmdtype = getcmdtype()
+    if cmdtype != ':' && cmdtype != '/'
+        return ''
+    endif
+    call feedkeys("\<c-c>q" . cmdtype . 'k0' . (getcmdpos() - 1) . 'li', 'nt')
+    return ''
 endfunction
-autocmd User ZFVimIM_event_OnDbInit call s:myLocalDb()
+cnoremap <silent><expr> ;; ZF_Setting_cmdEdit()
+

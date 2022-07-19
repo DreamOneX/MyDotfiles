@@ -135,3 +135,4 @@ eval $(thefuck --alias)
 eval $(thefuck --alias FUCK)
 alias sus='sudo -u server'
 alias susr='sudo -u server screen -r'
+export GPG_TTY=$(tty)

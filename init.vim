@@ -20,6 +20,17 @@ set smartindent   "缩进
 set hlsearch
 "set background=dark
 
+
+function Paste_set()
+	if &paste
+		set nopaste
+	else
+		set paste
+	endif
+endfunction
+
+nmap <expr><leader>pp Paste_set()
+
 "vim-plug start
 call plug#begin('~/.vim/plugged')
 Plug 'yianwillis/vimcdoc'    "中文文档
@@ -146,7 +157,7 @@ let g:copilot_node_command = "/usr/local/node16/bin/node"
 "ZFVimIm
 let g:zf_git_user_email='me@dreamonex.ml'
 let g:zf_git_user_name='DreamOneX'
-let g:zf_git_user_token='你想干吗？'
+let g:zf_git_user_token='你 不 对 劲'
 let &statusline='%{ZFVimIME_IMEStatusline()}'.&statusline
 function! ZF_Setting_cmdEdit()
     let cmdtype = getcmdtype()
@@ -156,7 +167,7 @@ function! ZF_Setting_cmdEdit()
     call feedkeys("\<c-c>q" . cmdtype . 'k0' . (getcmdpos() - 1) . 'li', 'nt')
     return ''
 endfunction
-cnoremap <silent><expr> ;; ZF_Setting_cmdEdit()
+cnoremap <silent><expr> <leader>;; ZF_Setting_cmdEdit()
 
 " 更改快捷键
 map f <Plug>(easymotion-prefix)

@@ -158,7 +158,7 @@ let g:copilot_node_command = "/usr/local/node16/bin/node"
 "ZFVimIm
 let g:zf_git_user_email='me@dreamonex.ml'
 let g:zf_git_user_name='DreamOneX'
-let g:zf_git_user_token='你 很 不 对 劲'
+let g:zf_git_user_token='不可以啦'
 let &statusline='%{ZFVimIME_IMEStatusline()}'.&statusline
 function! ZF_Setting_cmdEdit()
 	let cmdtype = getcmdtype()
@@ -276,3 +276,7 @@ endfunction
 
 let g:coc_snippet_next = '<tab>'
 
+" autoformat
+let g:autoformat_verbosemode=1
+let g:formatdef_ktlint = '"ktlint --stdin -F"'
+let g:formatters_kotlin = ['ktlint']

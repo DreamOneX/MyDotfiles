@@ -14,6 +14,7 @@ set history=10000 "历史
 set autoindent    "自动缩进
 set cindent
 set tabstop=4     "tab长度
+set expandtab
 set shiftwidth=4
 set incsearch
 set smartindent   "缩进
@@ -111,17 +112,17 @@ let g:airline#extensions#tabline#formatter = 'default'
 let g:airline#extensions#keymap#enabled = 1
 let g:airline#extensions#tabline#buffer_idx_mode = 1
 let g:airline#extensions#tabline#buffer_idx_format = {
-       \ '0': '0 ',
-       \ '1': '1 ',
-       \ '2': '2 ',
-       \ '3': '3 ',
-       \ '4': '4 ',
-       \ '5': '5 ',
-       \ '6': '6 ',
-       \ '7': '7 ',
-       \ '8': '8 ',
-       \ '9': '9 '
-       \}
+			\ '0': '0 ',
+			\ '1': '1 ',
+			\ '2': '2 ',
+			\ '3': '3 ',
+			\ '4': '4 ',
+			\ '5': '5 ',
+			\ '6': '6 ',
+			\ '7': '7 ',
+			\ '8': '8 ',
+			\ '9': '9 '
+			\}
 " 设置切换tab的快捷键 <\> + <i> 切换到第i个 tab
 nmap <leader>1 <Plug>AirlineSelectTab1
 nmap <leader>2 <Plug>AirlineSelectTab2
@@ -140,7 +141,7 @@ nmap <leader>+ <Plug>AirlineSelectNextTab
 nmap <leader>q :bp<cr>:bd #<cr>
 " 修改了一些个人不喜欢的字符
 if !exists('g:airline_symbols')
-    let g:airline_symbols = {}
+	let g:airline_symbols = {}
 endif
 let g:airline_symbols.linenr = "CL" " current line
 let g:airline_symbols.whitespace = '|'
@@ -157,15 +158,15 @@ let g:copilot_node_command = "/usr/local/node16/bin/node"
 "ZFVimIm
 let g:zf_git_user_email='me@dreamonex.ml'
 let g:zf_git_user_name='DreamOneX'
-let g:zf_git_user_token='你 不 对 劲'
+let g:zf_git_user_token='你 很 不 对 劲'
 let &statusline='%{ZFVimIME_IMEStatusline()}'.&statusline
 function! ZF_Setting_cmdEdit()
-    let cmdtype = getcmdtype()
-    if cmdtype != ':' && cmdtype != '/'
-        return ''
-    endif
-    call feedkeys("\<c-c>q" . cmdtype . 'k0' . (getcmdpos() - 1) . 'li', 'nt')
-    return ''
+	let cmdtype = getcmdtype()
+	if cmdtype != ':' && cmdtype != '/'
+		return ''
+	endif
+	call feedkeys("\<c-c>q" . cmdtype . 'k0' . (getcmdpos() - 1) . 'li', 'nt')
+	return ''
 endfunction
 cnoremap <silent><expr> <leader>;; ZF_Setting_cmdEdit()
 
@@ -200,11 +201,11 @@ nmap <silent> gr <Plug>(coc-references)
 nnoremap <silent> K :call ShowDocumentation()<CR>
 
 function! ShowDocumentation()
-  if CocAction('hasProvider', 'hover')
-    call CocActionAsync('doHover')
-  else
-    call feedkeys('K', 'in')
-  endif
+	if CocAction('hasProvider', 'hover')
+		call CocActionAsync('doHover')
+	else
+		call feedkeys('K', 'in')
+	endif
 endfunction
 
 autocmd CursorHold * silent call CocActionAsync('highlight')
@@ -241,3 +242,37 @@ nmap <leader>f  <Plug>(coc-format-selected)
 " Requires 'textDocument/selectionRange' support of language server.
 nmap <silent> <C-s> <Plug>(coc-range-select)
 xmap <silent> <C-s> <Plug>(coc-range-select)
+
+autocmd FileType scss setl iskeyword+=@-@
+
+" Use <C-l> for trigger snippet expand.
+imap <C-l> <Plug>(coc-snippets-expand)
+
+" Use <C-j> for select text for visual placeholder of snippet.
+vmap <C-j> <Plug>(coc-snippets-select)
+
+" Use <C-j> for jump to next placeholder, it's default of coc.nvim
+let g:coc_snippet_next = '<c-j>'
+
+" Use <C-k> for jump to previous placeholder, it's default of coc.nvim
+let g:coc_snippet_prev = '<c-k>'
+
+" Use <C-j> for both expand and jump (make expand higher priority.)
+imap <C-j> <Plug>(coc-snippets-expand-jump)
+
+" Use <leader>x for convert visual selected code to snippet
+xmap <leader>x  <Plug>(coc-convert-snippet)
+
+inoremap <silent><expr> <TAB>
+      \ pumvisible() ? coc#_select_confirm() :
+      \ coc#expandableOrJumpable() ? "\<C-r>=coc#rpc#request('doKeymap', ['snippets-expand-jump',''])\<CR>" :
+      \ <SID>check_back_space() ? "\<TAB>" :
+      \ coc#refresh()
+
+function! s:check_back_space() abort
+  let col = col('.') - 1
+  return !col || getline('.')[col - 1]  =~# '\s'
+endfunction
+
+let g:coc_snippet_next = '<tab>'
+

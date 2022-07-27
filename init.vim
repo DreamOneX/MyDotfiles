@@ -55,6 +55,7 @@ Plug 'ZSaberLv0/ZFVimIM_openapi' " 百度云输入法
 Plug 'easymotion/vim-easymotion' " 搜索
 Plug 'vim-scripts/gundo.vim' " 撤销
 Plug 'udalov/kotlin-vim' " kotlin
+
 "一些主题
 Plug 'crusoexia/vim-monokai'
 Plug 'morhetz/gruvbox'
@@ -158,7 +159,7 @@ let g:copilot_node_command = "/usr/local/node16/bin/node"
 "ZFVimIm
 let g:zf_git_user_email='me@dreamonex.ml'
 let g:zf_git_user_name='DreamOneX'
-let g:zf_git_user_token='不可以啦'
+let g:zf_git_user_token='你不要日我的仓库，啊啊啊啊啊'
 let &statusline='%{ZFVimIME_IMEStatusline()}'.&statusline
 function! ZF_Setting_cmdEdit()
 	let cmdtype = getcmdtype()
@@ -280,3 +281,12 @@ let g:coc_snippet_next = '<tab>'
 let g:autoformat_verbosemode=1
 let g:formatdef_ktlint = '"ktlint --stdin -F"'
 let g:formatters_kotlin = ['ktlint']
+let g:formatdef_python_pep8 = '"autopep8"'
+let g:formatters_python = ['python_pep8']
+
+" LeaderF
+let g:Lf_RootMarkers = ['.git', '.svn', '.hg', '.project', '.root']
+nmap <leader>lr :Leaderf rg<CR>
+nmap <leader>ll :LeaderfLine<CR>
+nmap <leader>lf :LeaderfFile<CR>
+nmap <leader>lh :LeaderfHelp<CR>

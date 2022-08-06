@@ -19,6 +19,8 @@ set shiftwidth=4
 set incsearch
 set smartindent   "缩进
 set hlsearch
+set undofile
+set undodir=~/.vim/undo
 "set background=dark
 
 
@@ -31,6 +33,8 @@ function Paste_set()
 endfunction
 
 nmap <expr><leader>pp Paste_set()
+
+tnoremap <ESC><ESC><ESC><ESC> <C-\><C-n>
 
 "vim-plug start
 call plug#begin('~/.vim/plugged')
@@ -53,8 +57,9 @@ Plug 'ZSaberLv0/ZFVimJob' "  用于提升词库加载性能
 Plug 'DreamOneX/ZFVimIM_pinyin_base' " 你的词库
 Plug 'ZSaberLv0/ZFVimIM_openapi' " 百度云输入法
 Plug 'easymotion/vim-easymotion' " 搜索
-Plug 'vim-scripts/gundo.vim' " 撤销
 Plug 'udalov/kotlin-vim' " kotlin
+Plug 'simnalamburt/vim-mundo'
+Plug 'dense-analysis/ale'
 
 "一些主题
 Plug 'crusoexia/vim-monokai'
@@ -121,9 +126,10 @@ let g:airline#extensions#tabline#buffer_idx_format = {
 			\ '5': '5 ',
 			\ '6': '6 ',
 			\ '7': '7 ',
-			\ '8': '8 ',
+            \ '8': '8 ',
 			\ '9': '9 '
 			\}
+let g:airline#extensions#ale#enabled = 1
 " 设置切换tab的快捷键 <\> + <i> 切换到第i个 tab
 nmap <leader>1 <Plug>AirlineSelectTab1
 nmap <leader>2 <Plug>AirlineSelectTab2
@@ -159,7 +165,7 @@ let g:copilot_node_command = "/usr/local/node16/bin/node"
 "ZFVimIm
 let g:zf_git_user_email='me@dreamonex.ml'
 let g:zf_git_user_name='DreamOneX'
-let g:zf_git_user_token='你不要日我的仓库，啊啊啊啊啊'
+let g:zf_git_user_token='你肯定不对劲'
 let &statusline='%{ZFVimIME_IMEStatusline()}'.&statusline
 function! ZF_Setting_cmdEdit()
 	let cmdtype = getcmdtype()
@@ -281,12 +287,23 @@ let g:coc_snippet_next = '<tab>'
 let g:autoformat_verbosemode=1
 let g:formatdef_ktlint = '"ktlint --stdin -F"'
 let g:formatters_kotlin = ['ktlint']
-let g:formatdef_python_pep8 = '"autopep8"'
-let g:formatters_python = ['python_pep8']
+let g:formatdef_python = '"yapf"'
+let g:formatters_python = ['python']
+let g:formatdef_allman = '"astyle --style=allman --pad-oper"'
+let g:formatters_cpp = ['allman']
+let g:formatters_c = ['allman']
+nmap <leader>af :Autoformat<CR>
 
 " LeaderF
 let g:Lf_RootMarkers = ['.git', '.svn', '.hg', '.project', '.root']
 nmap <leader>lr :Leaderf rg<CR>
 nmap <leader>ll :LeaderfLine<CR>
 nmap <leader>lf :LeaderfFile<CR>
-nmap <leader>lh :LeaderfHelp<CR>
+" Mundo
+nmap <leader>ms :MundoShow<CR>
+nmap <leader>mh :MundoHide<CR>
+
+" ale
+let b:ale_linters = ['flake8', 'pylint', 'ktlint']
+let b:ale_fixers = ['autopep8', 'yapf']
+let g:ale_disable_lsp = 1

@@ -10,6 +10,9 @@ typeset -x XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 HISTFILE=~/.zsh_history
 HISTSIZE=100000
 SAVEHIST=1000000
+ENABLE_CORRECTION="true"
+COMPLETION_WAITING_DOTS="true"
+
 setopt autocd beep extendedglob nomatch notify
 bindkey -e
 # End of lines configured by zsh-newuser-install
@@ -115,24 +118,31 @@ alias la='exa -labgh'
 alias ll='exa -lbg'
 alias lsa='exa -lbagR'
 alias lst='exa -lTabgh' # 输入lst,将展示类似于tree的树状列表。
-alias lls='ls --color=auto'
+alias lls='/bin/ls --color=auto'
 # color should not be always.
 alias llst='tree -pCsh'
-alias lll='ls -lah'
-alias lla='ls -lAh'
-alias lllll='ls -lh'
-alias llsa='ls -lah'
+alias lll='lls -lah'
+alias lla='lls -lAh'
+alias lllll='lls -lh'
+alias llsa='lls -lah'
 
 alias lcat=/bin/cat
 # bat supports syntax highlighting for a large number of programming and markup languages. bat是cat的替代品，支持多语言语法高亮。
 alias cat="bat -pp"
 typeset -g BAT_PAGER="less -m -RFQ"
 alias sr='screen -r'
-. "/home/admin/.acme.sh/acme.sh.env"
 alias lcat=/bin/cat
 eval $(thefuck --alias)
 # You can use whatever you want as an alias, like for Mondays:
 eval $(thefuck --alias FUCK)
-alias sus='sudo -u server'
-alias susr='sudo -u server screen -r'
 export GPG_TTY=$(tty)
+
+export LESS_TERMCAP_mb=$'\E[01;34m'
+export LESS_TERMCAP_md=$'\E[01;34m'
+export LESS_TERMCAP_me=$'\E[0m'
+export LESS_TERMCAP_us=$'\E[01;32m'
+export LESS_TERMCAP_ue=$'\E[0m'
+export LESS_TERMCAP_so=$'\E[01;33;44m'
+export LESS_TERMCAP_se=$'\E[0m'
+
+alias gay=git

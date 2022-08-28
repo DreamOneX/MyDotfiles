@@ -1,0 +1,38 @@
+[user]
+	email = me@dreamonex.eu.org
+	name = DreamOneX
+    signingkey = 47926B6E5C3D04E93A2A627F67C3390010A1A57A
+
+[core]
+    pager = delta
+
+[interactive]
+    diffFilter = delta --color-only
+
+[delta]
+    navigate = true
+
+[merge]
+    conflictstyle = diff3
+
+[diff]
+    colorMoved = default
+
+[delta]
+    minus-style = brightwhite "#5E0000"
+    minus-emph-style = brightwhite bold "#AE0000"
+    plus-style = brightwhite "#005F01"
+    plus-emph-style = brightwhite bold "#008700"
+    keep-plus-minus-marker = true
+    line-numbers = true
+	line-numbers-minus-style = "#E87070"
+    line-numbers-zero-style = brightwhite
+    line-numbers-plus-style = "#8EC38E"
+    line-numbers-left-format = "{nm:>4}┊"
+    line-numbers-right-format = "{np:>4}│"
+    line-numbers-left-style = brightblue
+    line-numbers-right-style = brightblue
+    commit-decoration-style = bold "#FCF790" box ul
+    file-style = bold "#FCF790" ul
+    file-decoration-style = none
+    hunk-header-decoration-style = bold "#FCF790"

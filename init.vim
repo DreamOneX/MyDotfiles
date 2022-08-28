@@ -1,72 +1,73 @@
 filetype plugin on
 set nocompatible
 
-
+echo "(≧▽≦) NeoVim is starting"
 set backspace=indent,eol,start
-set shell=/bin/bash "设置shell
-syntax on "开启高亮
-set number "显示行号
-set mouse=a "开启鼠标
-set laststatus=2 "显示状态栏
+set shell=/usr/bin/zsh  " 设置shell
+syntax on               " 开启高亮
+set number              " 显示行号
+set mouse=a             " 开启鼠标
+set laststatus=2        " 显示状态栏
 set ambiwidth=double
 set t_Co=256
-set history=10000 "历史
-set autoindent    "自动缩进
+set history=10000       " 历史
+set autoindent          " 自动缩进
 set cindent
-set tabstop=4     "tab长度
+set tabstop=4           " tab长度
 set expandtab
 set shiftwidth=4
 set incsearch
-set smartindent   "缩进
-set hlsearch
-set undofile
+set smartindent         " 缩进
+set hlsearch            " 高亮搜索
+set undofile            " 撤销文件
 set undodir=~/.vim/undo
+set cursorline          " 高亮当前行
+set ic                  " 无视大小写
 "set background=dark
 
+let mapleader = "\\"
 
-function Paste_set()
-	if &paste
-		set nopaste
-	else
-		set paste
-	endif
-endfunction
+iabbrev @@ DreamOneX <me@dreamonex.eu.org>
 
-nmap <expr><leader>pp Paste_set()
-
+nnoremap <leader>pp :set paste!<CR>
 tnoremap <ESC><ESC><ESC><ESC> <C-\><C-n>
 
 "vim-plug start
 call plug#begin('~/.vim/plugged')
-Plug 'yianwillis/vimcdoc'    "中文文档
-Plug 'Yggdroot/indentLine'    "缩进线
-Plug 'vim-airline/vim-airline'    "状态栏
-Plug 'vim-airline/vim-airline-themes'    "airline 的主题
-Plug 'scrooloose/nerdcommenter'    "注释
-Plug 'luochen1990/rainbow'    "括号高亮
-Plug 'https://github.com/scrooloose/nerdtree.git'    "目录树
-Plug 'majutsushi/tagbar'    "ctags
-Plug 'Yggdroot/LeaderF', { 'do': './install.sh'  }    "搜索
-Plug 'jiangmiao/auto-pairs'    "括号
-Plug 'neoclide/coc.nvim', {'branch': 'release'}    "自动补全
-Plug 'Chiel92/vim-autoformat' "自动格式化
-Plug 'mtdl9/vim-log-highlighting' "日志高亮
-Plug 'github/copilot.vim' "Github Copilot
-Plug 'ZSaberLv0/ZFVimIM' "中文输入法
-Plug 'ZSaberLv0/ZFVimJob' "  用于提升词库加载性能
-Plug 'DreamOneX/ZFVimIM_pinyin_base' " 你的词库
-Plug 'ZSaberLv0/ZFVimIM_openapi' " 百度云输入法
-Plug 'easymotion/vim-easymotion' " 搜索
-Plug 'udalov/kotlin-vim' " kotlin
-Plug 'simnalamburt/vim-mundo'
-Plug 'dense-analysis/ale'
+Plug 'yianwillis/vimcdoc'                          " 中文文档
+Plug 'Yggdroot/indentLine'                         " 缩进线
+Plug 'vim-airline/vim-airline'                     " 状态栏
+Plug 'vim-airline/vim-airline-themes'              " airline 的主题
+Plug 'scrooloose/nerdcommenter'                    " 注释
+Plug 'luochen1990/rainbow'                         " 括号高亮
+Plug 'https://github.com/scrooloose/nerdtree.git'  " NerdTree
+Plug 'ryanoasis/vim-devicons'                      " NerdFonts
+Plug 'tiagofumo/vim-nerdtree-syntax-highlight'
+Plug 'Xuyuanp/nerdtree-git-plugin'                 " NerdTree Git
+
+Plug 'majutsushi/tagbar'                           " ctags
+Plug 'Yggdroot/LeaderF', { 'do': './install.sh'  } " 搜索
+Plug 'jiangmiao/auto-pairs'                        " 括号
+Plug 'neoclide/coc.nvim', {'branch': 'release'}    " coc.nvim
+Plug 'Chiel92/vim-autoformat'                      " 自动格式化
+Plug 'mtdl9/vim-log-highlighting'                  " 日志高亮
+Plug 'github/copilot.vim'                          " Github Copilot
+Plug 'ZSaberLv0/ZFVimIM'                           " 中文输入法
+Plug 'ZSaberLv0/ZFVimJob'                          " 用于提升词库加载性能
+Plug 'DreamOneX/ZFVimIM_pinyin_base'               " 你的词库
+Plug 'ZSaberLv0/ZFVimIM_openapi'                   " 百度云输入法
+Plug 'easymotion/vim-easymotion'                   " ‽
+Plug 'udalov/kotlin-vim'                           " kotlin
+Plug 'simnalamburt/vim-mundo'                      " 撤销
+Plug 'dense-analysis/ale'                          " ale
+Plug 'godlygeek/tabular'                           " 文本对齐
+Plug 'preservim/vim-markdown'                      " markdown
 
 "一些主题
 Plug 'crusoexia/vim-monokai'
 Plug 'morhetz/gruvbox'
 Plug 'tomasr/molokai'
 Plug 'sonph/onehalf', { 'rtp': 'vim' }
-Plug 'dracula/vim'
 Plug 'chriskempson/base16-vim'
 Plug 'jnurmine/Zenburn'
 Plug 'gosukiwi/vim-atom-dark'
@@ -106,9 +107,25 @@ let g:NERDTreeWinSize = 25
 let g:NERDTreeDirArrowExpandable = '+'
 let g:NERDTreeDirArrowCollapsible = '-'
 let g:NERDTreeShowLineNumbers=0
-map <C-h> :NERDTree<CR> "按<C-w>打开NERDTree
+nnoremap <C-h> :NERDTree<CR> " 按<C-h>打开NERDTree
+" Git
+let g:NERDTreeGitStatusIndicatorMapCustom = {
+                \ 'Modified'  :'*',
+                \ 'Staged'    :'+',
+                \ 'Untracked' :'∆',
+                \ 'Renamed'   :'>',
+                \ 'Unmerged'  :'=',
+                \ 'Deleted'   :'x',
+                \ 'Dirty'     :'✗',
+                \ 'Ignored'   :'▨',
+                \ 'Clean'     :'√',
+                \ 'Unknown'   :'?',
+                \ }
+let g:NERDTreeGitStatusShowIgnored = 0
+let g:NERDTreeGitStatusUseNerdFonts = 0
+" end
 let g:rainbow_active = 1
-nnoremap <silent> <C-j> :TagbarToggle<CR> "按<C-t>打开tagbar
+nnoremap <silent> <C-j> :TagbarToggle<CR> "按<C-j>打开tagbar
 let g:airline#extensions#tabline#enabled = 1
 let g:airline#extensions#tabline#left_alt_sep = '|'
 let g:airline#extensions#tabline#buffer_nr_show = 0
@@ -131,21 +148,21 @@ let g:airline#extensions#tabline#buffer_idx_format = {
 			\}
 let g:airline#extensions#ale#enabled = 1
 " 设置切换tab的快捷键 <\> + <i> 切换到第i个 tab
-nmap <leader>1 <Plug>AirlineSelectTab1
-nmap <leader>2 <Plug>AirlineSelectTab2
-nmap <leader>3 <Plug>AirlineSelectTab3
-nmap <leader>4 <Plug>AirlineSelectTab4
-nmap <leader>5 <Plug>AirlineSelectTab5
-nmap <leader>6 <Plug>AirlineSelectTab6
-nmap <leader>7 <Plug>AirlineSelectTab7
-nmap <leader>8 <Plug>AirlineSelectTab8
-nmap <leader>9 <Plug>AirlineSelectTab9
+nnoremap <leader>1 <Plug>AirlineSelectTab1
+nnoremap <leader>2 <Plug>AirlineSelectTab2
+nnoremap <leader>3 <Plug>AirlineSelectTab3
+nnoremap <leader>4 <Plug>AirlineSelectTab4
+nnoremap <leader>5 <Plug>AirlineSelectTab5
+nnoremap <leader>6 <Plug>AirlineSelectTab6
+nnoremap <leader>7 <Plug>AirlineSelectTab7
+nnoremap <leader>8 <Plug>AirlineSelectTab8
+nnoremap <leader>9 <Plug>AirlineSelectTab9
 " 设置切换tab的快捷键 <\> + <-> 切换到前一个 tab
-nmap <leader>- <Plug>AirlineSelectPrevTab
+nnoremap <leader>- <Plug>AirlineSelectPrevTab
 " 设置切换tab的快捷键 <\> + <+> 切换到后一个 tab
-nmap <leader>+ <Plug>AirlineSelectNextTab
+nnoremap <leader>+ <Plug>AirlineSelectNextTab
 " 设置切换tab的快捷键 <\> + <q> 退出当前的 tab
-nmap <leader>q :bp<cr>:bd #<cr>
+nnoremap <leader>q :bp<cr>:bd #<cr>
 " 修改了一些个人不喜欢的字符
 if !exists('g:airline_symbols')
 	let g:airline_symbols = {}
@@ -163,9 +180,9 @@ colo atom-dark-256
 let g:copilot_node_command = "/usr/local/node16/bin/node"
 
 "ZFVimIm
-let g:zf_git_user_email='me@dreamonex.ml'
+let g:zf_git_user_email='me@dreamonex.eu.org'
 let g:zf_git_user_name='DreamOneX'
-let g:zf_git_user_token='你肯定不对劲'
+let g:zf_git_user_token=''
 let &statusline='%{ZFVimIME_IMEStatusline()}'.&statusline
 function! ZF_Setting_cmdEdit()
 	let cmdtype = getcmdtype()
@@ -292,16 +309,16 @@ let g:formatters_python = ['python']
 let g:formatdef_allman = '"astyle --style=allman --pad-oper"'
 let g:formatters_cpp = ['allman']
 let g:formatters_c = ['allman']
-nmap <leader>af :Autoformat<CR>
+nnoremap <leader>af :Autoformat<CR>
 
 " LeaderF
 let g:Lf_RootMarkers = ['.git', '.svn', '.hg', '.project', '.root']
-nmap <leader>lr :Leaderf rg<CR>
-nmap <leader>ll :LeaderfLine<CR>
-nmap <leader>lf :LeaderfFile<CR>
+nnoremap <leader>lr :Leaderf rg<CR>
+nnoremap <leader>ll :LeaderfLine<CR>
+nnoremap <leader>lf :LeaderfFile<CR>
 " Mundo
-nmap <leader>ms :MundoShow<CR>
-nmap <leader>mh :MundoHide<CR>
+nnoremap <leader>ms :MundoShow<CR>
+nnoremap <leader>mh :MundoHide<CR>
 
 " ale
 let b:ale_linters = ['flake8', 'pylint', 'ktlint']

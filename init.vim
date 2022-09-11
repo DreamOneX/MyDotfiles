@@ -60,10 +60,6 @@ Plug 'neoclide/coc.nvim', {'branch': 'release'}     " coc.nvim
 Plug 'Chiel92/vim-autoformat'                       " 自动格式化
 Plug 'mtdl9/vim-log-highlighting'                   " 日志高亮
 Plug 'github/copilot.vim'                           " Github Copilot
-Plug 'ZSaberLv0/ZFVimIM'                            " 中文输入法
-Plug 'ZSaberLv0/ZFVimJob'                           " 用于提升词库加载性能
-Plug 'DreamOneX/ZFVimIM_pinyin_base'                " 你的词库
-Plug 'ZSaberLv0/ZFVimIM_openapi'                    " 百度云输入法
 Plug 'easymotion/vim-easymotion'                    " ‽
 Plug 'udalov/kotlin-vim'                            " kotlin
 Plug 'simnalamburt/vim-mundo'                       " 撤销
@@ -325,6 +321,9 @@ vmap <Leader>tp <Plug>(coc-translator-pv)
 
 nmap <Leader>te <Plug>(coc-translator-e)
 vmap <Leader>te <Plug>(coc-translator-ev)
+
+nmap <Leader>tr <Plug>(coc-translator-r)
+vmap <Leader>tr <Plug>(coc-translator-rv)
 
 " autoformat
 let g:autoformat_verbosemode=1

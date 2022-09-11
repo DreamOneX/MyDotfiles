@@ -23,7 +23,11 @@ set undofile            " 撤销文件
 set undodir=~/.vim/undo
 set cursorline          " 高亮当前行
 set ic                  " 无视大小写
-"set background=dark
+set background=dark
+
+set signcolumn=yes
+set updatetime=300
+
 
 let mapleader = "\\"
 
@@ -32,36 +36,44 @@ iabbrev @@ DreamOneX <me@dreamonex.eu.org>
 nnoremap <leader>pp :set paste!<CR>
 tnoremap <ESC><ESC><ESC><ESC> <C-\><C-n>
 
+nnoremap <leader>ev :split $MYVIMRC<CR>
+nnoremap <leader>rl :source $MYVIMRC<CR>
+nnoremap <leader>evd :e $MYVIMRC<CR>
+
 "vim-plug start
 call plug#begin('~/.vim/plugged')
-Plug 'yianwillis/vimcdoc'                          " 中文文档
-Plug 'Yggdroot/indentLine'                         " 缩进线
-Plug 'vim-airline/vim-airline'                     " 状态栏
-Plug 'vim-airline/vim-airline-themes'              " airline 的主题
-Plug 'scrooloose/nerdcommenter'                    " 注释
-Plug 'luochen1990/rainbow'                         " 括号高亮
-Plug 'https://github.com/scrooloose/nerdtree.git'  " NerdTree
-Plug 'ryanoasis/vim-devicons'                      " NerdFonts
+Plug 'yianwillis/vimcdoc'                           " 中文文档
+Plug 'Yggdroot/indentLine'                          " 缩进线
+Plug 'vim-airline/vim-airline'                      " 状态栏
+Plug 'vim-airline/vim-airline-themes'               " airline 的主题
+Plug 'scrooloose/nerdcommenter'                     " 注释
+Plug 'luochen1990/rainbow'                          " 括号高亮
+Plug 'https://github.com/scrooloose/nerdtree.git'   " NerdTree
+Plug 'ryanoasis/vim-devicons'                       " NerdFonts
 Plug 'tiagofumo/vim-nerdtree-syntax-highlight'
-Plug 'Xuyuanp/nerdtree-git-plugin'                 " NerdTree Git
+Plug 'Xuyuanp/nerdtree-git-plugin'                  " NerdTree Git
 
-Plug 'majutsushi/tagbar'                           " ctags
-Plug 'Yggdroot/LeaderF', { 'do': './install.sh'  } " 搜索
-Plug 'jiangmiao/auto-pairs'                        " 括号
-Plug 'neoclide/coc.nvim', {'branch': 'release'}    " coc.nvim
-Plug 'Chiel92/vim-autoformat'                      " 自动格式化
-Plug 'mtdl9/vim-log-highlighting'                  " 日志高亮
-Plug 'github/copilot.vim'                          " Github Copilot
-Plug 'ZSaberLv0/ZFVimIM'                           " 中文输入法
-Plug 'ZSaberLv0/ZFVimJob'                          " 用于提升词库加载性能
-Plug 'DreamOneX/ZFVimIM_pinyin_base'               " 你的词库
-Plug 'ZSaberLv0/ZFVimIM_openapi'                   " 百度云输入法
-Plug 'easymotion/vim-easymotion'                   " ‽
-Plug 'udalov/kotlin-vim'                           " kotlin
-Plug 'simnalamburt/vim-mundo'                      " 撤销
-Plug 'dense-analysis/ale'                          " ale
-Plug 'godlygeek/tabular'                           " 文本对齐
-Plug 'preservim/vim-markdown'                      " markdown
+Plug 'majutsushi/tagbar'                            " ctags
+Plug 'Yggdroot/LeaderF', { 'do': './install.sh'  }  " 搜索
+Plug 'jiangmiao/auto-pairs'                         " 括号
+Plug 'neoclide/coc.nvim', {'branch': 'release'}     " coc.nvim
+Plug 'Chiel92/vim-autoformat'                       " 自动格式化
+Plug 'mtdl9/vim-log-highlighting'                   " 日志高亮
+Plug 'github/copilot.vim'                           " Github Copilot
+Plug 'ZSaberLv0/ZFVimIM'                            " 中文输入法
+Plug 'ZSaberLv0/ZFVimJob'                           " 用于提升词库加载性能
+Plug 'DreamOneX/ZFVimIM_pinyin_base'                " 你的词库
+Plug 'ZSaberLv0/ZFVimIM_openapi'                    " 百度云输入法
+Plug 'easymotion/vim-easymotion'                    " ‽
+Plug 'udalov/kotlin-vim'                            " kotlin
+Plug 'simnalamburt/vim-mundo'                       " 撤销
+Plug 'dense-analysis/ale'                           " ale
+Plug 'godlygeek/tabular'                            " 文本对齐
+Plug 'preservim/vim-markdown'                       " markdown
+Plug 'kshenoy/vim-signature'                        " mark高亮
+Plug 'mg979/vim-visual-multi', {'branch': 'master'} " 多光标
+Plug 'wellle/targets.vim'                           " 更多文本对象
+
 
 "一些主题
 Plug 'crusoexia/vim-monokai'
@@ -85,6 +97,7 @@ call plug#end()
 let g:AutoPairs = {'(':')', '[':']', '{':'}',"'":"'",'"':'"', '<':'>'}
 let g:indent_guides_guide_size = 1  " 对齐线的尺寸
 let g:indent_guides_start_level = 1  " 可视化显示缩进层数
+let g:indentLine_color_term = 239
 " <\>+<c>+<SPC> 在Normal和Visual模式下添加或去除注释
 "add spaces after comment delimiters by default
 let g:NERDSpaceDelims = 1
@@ -182,31 +195,44 @@ let g:copilot_node_command = "/usr/local/node16/bin/node"
 "ZFVimIm
 let g:zf_git_user_email='me@dreamonex.eu.org'
 let g:zf_git_user_name='DreamOneX'
-let g:zf_git_user_token=''
-let &statusline='%{ZFVimIME_IMEStatusline()}'.&statusline
-function! ZF_Setting_cmdEdit()
-	let cmdtype = getcmdtype()
-	if cmdtype != ':' && cmdtype != '/'
-		return ''
-	endif
-	call feedkeys("\<c-c>q" . cmdtype . 'k0' . (getcmdpos() - 1) . 'li', 'nt')
-	return ''
-endfunction
-cnoremap <silent><expr> <leader>;; ZF_Setting_cmdEdit()
+let g:zf_git_user_token='¿'
+let g:ZFVimIM_keymap=0
 
 " 更改快捷键
-map f <Plug>(easymotion-prefix)
-map ff <Plug>(easymotion-s)
-map fs <Plug>(easymotion-f)
-map fl <Plug>(easymotion-lineforward)
-map fj <Plug>(easymotion-j)
-map fk <Plug>(easymotion-k)
-map fh <Plug>(easymotion-linebackward)
-nmap ss <Plug>(easymotion-s2)
+map <space> <Plug>(easymotion-prefix)
+nmap <space>f <Plug>(easymotion-s)
+nmap <space>l <Plug>(easymotion-lineforward)
+nmap <space>j <Plug>(easymotion-j)
+nmap <space>k <Plug>(easymotion-k)
+nmap <space>h <Plug>(easymotion-linebackward)
+nmap <space>s <Plug>(easymotion-s2)
 " " 忽略大小写
-let g:EasyMotion_smartcase = 1"
+let g:EasyMotion_smartcase = 1
+
 
 " coc.nvim
+
+" Use tab for trigger completion with characters ahead and navigate.
+" NOTE: There's always complete item selected by default, you may want to enable
+" no select by `"suggest.noselect": true` in your configuration file.
+" NOTE: Use command ':verbose imap <tab>' to make sure tab is not mapped by
+" other plugin before putting this into your config.
+inoremap <silent><expr> <TAB>
+      \ coc#pum#visible() ? coc#pum#next(1) :
+      \ CheckBackspace() ? "\<Tab>" :
+      \ coc#refresh()
+inoremap <expr><S-TAB> coc#pum#visible() ? coc#pum#prev(1) : "\<C-h>"
+
+" Make <CR> to accept selected completion item or notify coc.nvim to format
+" <C-g>u breaks current undo, please make your own choice.
+inoremap <silent><expr> <CR> coc#pum#visible() ? coc#pum#confirm()
+                              \: "\<C-g>u\<CR>\<c-r>=coc#on_enter()\<CR>"
+
+function! CheckBackspace() abort
+  let col = col('.') - 1
+  return !col || getline('.')[col - 1]  =~# '\s'
+endfunction
+
 nmap <leader>rn <Plug>(coc-rename)
 nmap <leader>rf <Plug>(coc-refactor)
 
@@ -287,12 +313,6 @@ imap <C-j> <Plug>(coc-snippets-expand-jump)
 " Use <leader>x for convert visual selected code to snippet
 xmap <leader>x  <Plug>(coc-convert-snippet)
 
-inoremap <silent><expr> <TAB>
-      \ pumvisible() ? coc#_select_confirm() :
-      \ coc#expandableOrJumpable() ? "\<C-r>=coc#rpc#request('doKeymap', ['snippets-expand-jump',''])\<CR>" :
-      \ <SID>check_back_space() ? "\<TAB>" :
-      \ coc#refresh()
-
 function! s:check_back_space() abort
   let col = col('.') - 1
   return !col || getline('.')[col - 1]  =~# '\s'
@@ -300,11 +320,18 @@ endfunction
 
 let g:coc_snippet_next = '<tab>'
 
+nmap <Leader>tp <Plug>(coc-translator-p)
+vmap <Leader>tp <Plug>(coc-translator-pv)
+
+nmap <Leader>te <Plug>(coc-translator-e)
+vmap <Leader>te <Plug>(coc-translator-ev)
+
 " autoformat
 let g:autoformat_verbosemode=1
 let g:formatdef_ktlint = '"ktlint --stdin -F"'
 let g:formatters_kotlin = ['ktlint']
 let g:formatdef_python = '"yapf"'
+let g:formatter_yapf_style = 'pep8'
 let g:formatters_python = ['python']
 let g:formatdef_allman = '"astyle --style=allman --pad-oper"'
 let g:formatters_cpp = ['allman']
@@ -324,3 +351,6 @@ nnoremap <leader>mh :MundoHide<CR>
 let b:ale_linters = ['flake8', 'pylint', 'ktlint']
 let b:ale_fixers = ['autopep8', 'yapf']
 let g:ale_disable_lsp = 1
+
+" signature
+nnoremap <leader>st :SignatureRefresh<CR>:SignatureToggle<CR>

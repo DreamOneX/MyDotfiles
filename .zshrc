@@ -13,6 +13,13 @@ SAVEHIST=1000000
 ENABLE_CORRECTION="true"
 COMPLETION_WAITING_DOTS="true"
 
+autoload -U run-help
+autoload run-help-git
+autoload run-help-svn
+autoload run-help-svk
+unalias run-help
+alias help=run-help
+
 # setopt autocd beep extendedglob nomatch notify
 ## Options section
 setopt correct                                                  # Auto correct mistakes
@@ -55,6 +62,7 @@ bindkey '^[[Z' undo                                             # Shift+tab undo
 # End of lines configured by zsh-newuser-install
 # The following lines were added by compinstall
 zstyle :compinstall filename '/home/dreamonex/.zshrc'
+zstyle ':completion:*' rehash true
 
 autoload -Uz compinit
 compinit
@@ -163,12 +171,17 @@ alias lla='lls -lAh'
 alias lllll='lls -lh'
 alias llsa='lls -lah'
 
+alias superexa='exa -laghHimSuU --changed --time-style full-iso --octal-permissions --git --icons --extended'
+
 alias lcat=/bin/cat
 # bat supports syntax highlighting for a large number of programming and markup languages. bat是cat的替代品，支持多语言语法高亮。
 alias cat="bat -pp"
 typeset -g BAT_PAGER="less -m -RFQ"
 alias sr='screen -r'
 alias lcat=/bin/cat
+
+alias fd='fd -HI'
+
 eval $(thefuck --alias)
 # You can use whatever you want as an alias, like for Mondays:
 eval $(thefuck --alias FUCK)
@@ -184,3 +197,13 @@ export LESS_TERMCAP_se=$'\E[0m'
 export VISUAL=nvim
 
 alias gay=git
+
+alias rsync=srsync
+function cpr() {
+  rsync --archive -hh --partial --info=stats1,progress2 --modify-window=1 "$@"
+} 
+function mvr() {
+  rsync --archive -hh --partial --info=stats1,progress2 --modify-window=1 --remove-source-files "$@"
+}
+
+source /home/dreamonex/.config/broot/launcher/bash/br

@@ -166,6 +166,22 @@ let g:airline#extensions#tabline#buffer_idx_format = {
 			\ '9': '9 '
 			\}
 let g:airline#extensions#ale#enabled = 1
+" 设置切换tab的快捷键 <\> + <i> 切换到第i个 tab
+nnoremap <leader>1 <Plug>AirlineSelectTab1
+nnoremap <leader>2 <Plug>AirlineSelectTab2
+nnoremap <leader>3 <Plug>AirlineSelectTab3
+nnoremap <leader>4 <Plug>AirlineSelectTab4
+nnoremap <leader>5 <Plug>AirlineSelectTab5
+nnoremap <leader>6 <Plug>AirlineSelectTab6
+nnoremap <leader>7 <Plug>AirlineSelectTab7
+nnoremap <leader>8 <Plug>AirlineSelectTab8
+nnoremap <leader>9 <Plug>AirlineSelectTab9
+" 设置切换tab的快捷键 <\> + <-> 切换到前一个 tab
+nnoremap <leader>- <Plug>AirlineSelectPrevTab
+" 设置切换tab的快捷键 <\> + <+> 切换到后一个 tab
+nnoremap <leader>+ <Plug>AirlineSelectNextTab
+" 设置切换tab的快捷键 <\> + <q> 退出当前的 tab
+nnoremap <leader>q :bp<cr>:bd #<cr>
 " 修改了一些个人不喜欢的字符
 if !exists('g:airline_symbols')
 	let g:airline_symbols = {}

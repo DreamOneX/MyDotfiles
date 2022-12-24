@@ -149,7 +149,7 @@ alias .....=../../../..
 alias ......=../../../../..
 alias _='sudo '
 alias afind='ack -il'
-alias egrep='egrep --color=auto'
+# alias egrep='egrep --color=auto'
 alias fgrep='fgrep --color=auto'
 alias gc1='git clone --recursive --depth=1'
 alias globurl='noglob urlglobber '
@@ -182,6 +182,9 @@ alias lcat=/bin/cat
 
 alias fd='fd -HI'
 
+alias p='proxychains -q'
+alias sp="paru -Sl | fzf | awk '{print \$2}'"
+
 eval $(thefuck --alias)
 # You can use whatever you want as an alias, like for Mondays:
 eval $(thefuck --alias FUCK)
@@ -206,4 +209,11 @@ function mvr() {
   rsync --archive -hh --partial --info=stats1,progress2 --modify-window=1 --remove-source-files "$@"
 }
 
+function unicodeof() {
+    for i in $(echo "$*" | sed 's/\(.\)/\1 /g'); do
+        printf "%s\tU+%04X\n" "$i" "'$i"
+    done
+}
+
+alias t='todo.sh'
 source /home/dreamonex/.config/broot/launcher/bash/br

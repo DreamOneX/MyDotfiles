@@ -40,6 +40,10 @@ nnoremap <leader>ev :split $MYVIMRC<CR>
 nnoremap <leader>rl :source $MYVIMRC<CR>
 nnoremap <leader>evd :e $MYVIMRC<CR>
 
+nnoremap <C-h> :NERDTreeToggle<CR> " 按<C-h>打开NERDTree
+nnoremap <leader>nf :NERDTreeFind<CR>
+nnoremap <silent> <C-j> :TagbarToggle<CR> "按<C-j>打开tagbar
+
 "vim-plug start
 call plug#begin('~/.vim/plugged')
 Plug 'yianwillis/vimcdoc'                           " 中文文档
@@ -52,6 +56,7 @@ Plug 'https://github.com/scrooloose/nerdtree.git'   " NerdTree
 Plug 'ryanoasis/vim-devicons'                       " NerdFonts
 Plug 'tiagofumo/vim-nerdtree-syntax-highlight'
 Plug 'Xuyuanp/nerdtree-git-plugin'                  " NerdTree Git
+Plug 'PhilRunninger/nerdtree-visual-selection'      " NerdTree Ops
 
 Plug 'majutsushi/tagbar'                            " ctags
 Plug 'Yggdroot/LeaderF', { 'do': './install.sh'  }  " 搜索
@@ -116,7 +121,12 @@ let g:NERDTreeWinSize = 25
 let g:NERDTreeDirArrowExpandable = '+'
 let g:NERDTreeDirArrowCollapsible = '-'
 let g:NERDTreeShowLineNumbers=0
-nnoremap <C-h> :NERDTree<CR> " 按<C-h>打开NERDTree
+let g:NERDTreeFileExtensionHighlightFullName = 1
+let g:NERDTreeExactMatchHighlightFullName = 1
+let g:NERDTreePatternMatchHighlightFullName = 1
+let g:NERDTreeHighlightFolders = 1 " enables folder icon highlighting using exact match
+let g:NERDTreeHighlightFoldersFullName = 1 " highlights the folder name
+
 " Git
 let g:NERDTreeGitStatusIndicatorMapCustom = {
                 \ 'Modified'  :'*',
@@ -133,8 +143,8 @@ let g:NERDTreeGitStatusIndicatorMapCustom = {
 let g:NERDTreeGitStatusShowIgnored = 0
 let g:NERDTreeGitStatusUseNerdFonts = 0
 " end
+
 let g:rainbow_active = 1
-nnoremap <silent> <C-j> :TagbarToggle<CR> "按<C-j>打开tagbar
 let g:airline#extensions#tabline#enabled = 1
 let g:airline#extensions#tabline#left_alt_sep = '|'
 let g:airline#extensions#tabline#buffer_nr_show = 0
@@ -156,22 +166,6 @@ let g:airline#extensions#tabline#buffer_idx_format = {
 			\ '9': '9 '
 			\}
 let g:airline#extensions#ale#enabled = 1
-" 设置切换tab的快捷键 <\> + <i> 切换到第i个 tab
-nnoremap <leader>1 <Plug>AirlineSelectTab1
-nnoremap <leader>2 <Plug>AirlineSelectTab2
-nnoremap <leader>3 <Plug>AirlineSelectTab3
-nnoremap <leader>4 <Plug>AirlineSelectTab4
-nnoremap <leader>5 <Plug>AirlineSelectTab5
-nnoremap <leader>6 <Plug>AirlineSelectTab6
-nnoremap <leader>7 <Plug>AirlineSelectTab7
-nnoremap <leader>8 <Plug>AirlineSelectTab8
-nnoremap <leader>9 <Plug>AirlineSelectTab9
-" 设置切换tab的快捷键 <\> + <-> 切换到前一个 tab
-nnoremap <leader>- <Plug>AirlineSelectPrevTab
-" 设置切换tab的快捷键 <\> + <+> 切换到后一个 tab
-nnoremap <leader>+ <Plug>AirlineSelectNextTab
-" 设置切换tab的快捷键 <\> + <q> 退出当前的 tab
-nnoremap <leader>q :bp<cr>:bd #<cr>
 " 修改了一些个人不喜欢的字符
 if !exists('g:airline_symbols')
 	let g:airline_symbols = {}
@@ -353,3 +347,6 @@ let g:ale_disable_lsp = 1
 
 " signature
 nnoremap <leader>st :SignatureRefresh<CR>:SignatureToggle<CR>
+
+" markdown
+let g:vim_markdown_conceal = 0

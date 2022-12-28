@@ -28,6 +28,14 @@ set background=dark
 set signcolumn=yes
 set updatetime=300
 
+if has("termguicolors")
+    " fix bug for vim
+    set t_8f=[38;2;%lu;%lu;%lum
+    set t_8b=[48;2;%lu;%lu;%lum
+
+    " enable true color
+    set termguicolors
+endif
 
 let mapleader = "\\"
 
@@ -54,7 +62,7 @@ Plug 'scrooloose/nerdcommenter'                     " 注释
 Plug 'luochen1990/rainbow'                          " 括号高亮
 Plug 'https://github.com/scrooloose/nerdtree.git'   " NerdTree
 Plug 'ryanoasis/vim-devicons'                       " NerdFonts
-Plug 'tiagofumo/vim-nerdtree-syntax-highlight'
+Plug 'johnstef99/vim-nerdtree-syntax-highlight'
 Plug 'Xuyuanp/nerdtree-git-plugin'                  " NerdTree Git
 Plug 'PhilRunninger/nerdtree-visual-selection'      " NerdTree Ops
 
@@ -127,6 +135,12 @@ let g:NERDTreePatternMatchHighlightFullName = 1
 let g:NERDTreeHighlightFolders = 1 " enables folder icon highlighting using exact match
 let g:NERDTreeHighlightFoldersFullName = 1 " highlights the folder name
 
+let g:NERDTreeExtensionHighlightColor = {}
+let g:NERDTreeExtensionHighlightColor['xml'] = '8FAA54'
+let g:NERDTreeExtensionHighlightColor['yaml'] = '8FAA54'
+
+let g:webdevicons_enable_nerdtree = 0
+
 " Git
 let g:NERDTreeGitStatusIndicatorMapCustom = {
                 \ 'Modified'  :'*',
@@ -193,10 +207,12 @@ let g:airline_symbols.branch = 'BR'
 let g:airline_symbols.readonly = "RO"
 let g:airline_symbols.dirty = "DT"
 let g:airline_symbols.crypt = "CR"
-colo atom-dark-256
+colo atom-dark
 
 "copilot
 let g:copilot_node_command = "/usr/local/node16/bin/node"
+imap <silent><script><expr> <M-t> copilot#Accept("\<CR>")
+let g:copilot_no_tab_map = v:true
 
 "ZFVimIm
 let g:zf_git_user_email='me@dreamonex.eu.org'

@@ -215,5 +215,12 @@ function unicodeof() {
     done
 }
 
+function new() {
+    for i in "$@"; do
+        mkdir -p "${i%/*}"
+        touch "$i"
+    done
+}
+
 alias t='todo.sh'
 source /home/dreamonex/.config/broot/launcher/bash/br

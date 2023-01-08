@@ -47,6 +47,7 @@ tnoremap <ESC><ESC><ESC><ESC> <C-\><C-n>
 nnoremap <leader>ev :split $MYVIMRC<CR>
 nnoremap <leader>rl :source $MYVIMRC<CR>
 nnoremap <leader>evd :e $MYVIMRC<CR>
+nnoremap <silent> <space>r :set relativenumber!<CR>
 
 nnoremap <C-h> :NERDTreeToggle<CR> " 按<C-h>打开NERDTree
 nnoremap <leader>nf :NERDTreeFind<CR>

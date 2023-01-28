@@ -140,7 +140,7 @@ let g:NERDTreeExtensionHighlightColor = {}
 let g:NERDTreeExtensionHighlightColor['xml'] = '8FAA54'
 let g:NERDTreeExtensionHighlightColor['yaml'] = '8FAA54'
 
-let g:webdevicons_enable_nerdtree = 0
+" let g:webdevicons_enable_nerdtree = 0
 
 " Git
 let g:NERDTreeGitStatusIndicatorMapCustom = {
@@ -211,7 +211,7 @@ let g:airline_symbols.crypt = "CR"
 colo atom-dark
 
 "copilot
-let g:copilot_node_command = "/usr/local/node16/bin/node"
+let g:copilot_node_command = "~/.vim/local/node16/bin/node"
 imap <silent><script><expr> <M-t> copilot#Accept("\<CR>")
 let g:copilot_no_tab_map = v:true
 
@@ -399,6 +399,9 @@ nnoremap <leader>mh :MundoHide<CR>
 let b:ale_linters = ['flake8', 'pylint', 'ktlint']
 let b:ale_fixers = ['autopep8', 'yapf']
 let g:ale_disable_lsp = 1
+
+let g:ale_python_pylint_options = '-d=line-too-long -d=missing-function-docstring -d=missing-module-docstring --good-names f'
+let g:ale_python_flake8_options = '--ignore E501'
 
 " signature
 nnoremap <leader>st :SignatureRefresh<CR>:SignatureToggle<CR>

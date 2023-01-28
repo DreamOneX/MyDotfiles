@@ -226,3 +226,4 @@ function new() {
 
 alias t='todo.sh'
 source /home/dreamonex/.config/broot/launcher/bash/br
+. "/home/dreamonex/.acme.sh/acme.sh.env"

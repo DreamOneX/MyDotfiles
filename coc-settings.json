@@ -1,0 +1,22 @@
+{
+    "translator.engines": [
+        "google",
+        "youdao",
+        "haici"
+    ],
+    "translator.toLang": "zh_CN",
+    "colors.enable": true,
+    "git.addGBlameToVirtualText": true,
+    "ds-pinyin-lsp.enabled": true,
+    "ds-pinyin-lsp.completion_on": true,
+    "ds-pinyin-lsp.db_path": "~/.config/nvim/dict.db3",
+    "ds-pinyin-lsp.prompt": true,
+    "ds-pinyin-lsp.match_long_input": true,
+    "ds-pinyin-lsp.max_suggest": 50,
+    "ds-pinyin-lsp.show_symbols_only_follow_by_hanzi": true,
+    "rust-analyzer.enable": true,
+    "rust-analyzer.server.path": "/usr/bin/rust-analyzer",
+    "rust-analyzer.inlayHints.bindingModeHints.enable": true,
+    "rust-analyzer.inlayHints.closureReturnTypeHints.enable": true,
+    "rust-analyzer.inlayHints.reborrowHints.enable": true,
+}

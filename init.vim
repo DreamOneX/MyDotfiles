@@ -37,6 +37,32 @@ if has("termguicolors")
     set termguicolors
 endif
 
+if exists("g:neovide")
+    set guifont=Sauce\ Code\ Pro\ Medium\ Nerd\ Font\ Complete:h14
+    let g:neovide_scale_factor = 1.0
+    let g:neovide_floating_blur_amount_x = 2.0
+    let g:neovide_floating_blur_amount_y = 2.0
+    let g:transparency = 0.8
+    let g:neovide_transparency = 0.8
+    let g:neovide_cursor_vfx_mode = "pixiedust"
+    let g:neovide_cursor_vfx_opacity = 300.0
+    let g:neovide_cursor_vfx_particle_lifetime = 4.2
+    let g:neovide_cursor_vfx_particle_density = 32.0
+    let g:neovide_cursor_vfx_particle_speed = 8.0
+    let g:neovide_cursor_vfx_particle_phase = 1.2
+    let g:neovide_cursor_vfx_particle_curl = 0.6
+    let g:neovide_cursor_animation_length = 0.07
+    let g:neovide_cursor_trail_size = 0.9
+    " let g:neovide_cursor_vfx_mode = "railgun"
+    " let g:neovide_cursor_vfx_opacity = 300.0
+    " let g:neovide_cursor_vfx_particle_lifetime = 1.8
+    " let g:neovide_cursor_vfx_particle_density = 12.0
+    " let g:neovide_cursor_vfx_particle_speed = 10.0
+    " let g:neovide_cursor_vfx_particle_phase = 1.2
+    " let g:neovide_cursor_vfx_particle_curl = 0.8
+
+endif
+
 let mapleader = "\\"
 
 iabbrev @@ DreamOneX <me@dreamonex.eu.org>
@@ -165,7 +191,7 @@ let g:airline#extensions#tabline#left_alt_sep = '|'
 let g:airline#extensions#tabline#buffer_nr_show = 0
 let g:airline#extensions#tabline#formatter = 'default'
 " let g:airline_theme = 'desertink'  " 主题
-" let g:airline_powerline_fonts = 1
+let g:airline_powerline_fonts = 1
 let g:airline#extensions#keymap#enabled = 1
 let g:airline#extensions#tabline#buffer_idx_mode = 1
 let g:airline#extensions#tabline#buffer_idx_format = {
@@ -400,11 +426,12 @@ let b:ale_linters = ['flake8', 'pylint', 'ktlint']
 let b:ale_fixers = ['autopep8', 'yapf']
 let g:ale_disable_lsp = 1
 
-let g:ale_python_pylint_options = '-d=line-too-long -d=missing-function-docstring -d=missing-module-docstring --good-names f'
+let g:ale_python_pylint_options = '-d=line-too-long -d=missing-function-docstring -d=missing-module-docstring --good-names f,fg,bg'
 let g:ale_python_flake8_options = '--ignore E501'
 
 " signature
-nnoremap <leader>st :SignatureRefresh<CR>:SignatureToggle<CR>
+nnoremap <leader>sr :SignatureRefresh<CR>
+nnoremap <leader>st :SignatureToggleSigns<CR>
 
 " markdown
 let g:vim_markdown_conceal = 0

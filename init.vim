@@ -3,30 +3,43 @@ set nocompatible
 
 echo "(≧▽≦) NeoVim is starting"
 set backspace=indent,eol,start
-set shell=/usr/bin/zsh  " 设置shell
-syntax on               " 开启高亮
-set number              " 显示行号
-set mouse=a             " 开启鼠标
-set laststatus=2        " 显示状态栏
+set shell=/usr/bin/zsh         " 设置shell
+syntax on                      " 开启高亮
+set number                     " 显示行号
+set mouse=a                    " 开启鼠标
+set laststatus=2               " 显示状态栏
 set ambiwidth=double
 set t_Co=256
-set history=10000       " 历史
-set autoindent          " 自动缩进
+set history=10000              " 历史
+set autoindent                 " 自动缩进
 set cindent
-set tabstop=4           " tab长度
+set tabstop=4                  " tab长度
 set expandtab
 set shiftwidth=4
 set incsearch
-set smartindent         " 缩进
-set hlsearch            " 高亮搜索
-set undofile            " 撤销文件
+set smartindent                " 缩进
+set hlsearch                   " 高亮搜索
+set undofile                   " 撤销文件
 set undodir=~/.vim/undo
-set cursorline          " 高亮当前行
-set ic                  " 无视大小写
+set cursorline                 " 高亮当前行
+set ignorecase                 " 无视大小写
 set background=dark
+set nrformats=bin,hex          " C-a C-x 设置
+set conceallevel=1             " 不隐藏特殊字符
 
 set signcolumn=yes
 set updatetime=300
+
+set listchars=eol:¬,tab:>-,trail:~,extends:>,precedes:<,nbsp:.,multispace:---+,conceal:#
+set list
+
+if executable('fcitx5-remote')
+    " 1 is inactivate, 2 is activate
+    let fcitx5enabled = system('fcitx5-remote')
+    let insertstate = fcitx5enabled
+    autocmd InsertLeave * let insertstate = system('fcitx5-remote') | call system('fcitx5-remote -c')
+    autocmd InsertEnter * if insertstate == 2 | call system('fcitx5-remote -o') | endif
+endif
 
 if has("termguicolors")
     " fix bug for vim
@@ -51,8 +64,8 @@ if exists("g:neovide")
     let g:neovide_cursor_vfx_particle_speed = 8.0
     let g:neovide_cursor_vfx_particle_phase = 1.2
     let g:neovide_cursor_vfx_particle_curl = 0.6
-    let g:neovide_cursor_animation_length = 0.07
-    let g:neovide_cursor_trail_size = 0.9
+    let g:neovide_cursor_animation_length = 0.05
+    let g:neovide_cursor_trail_size = 0.8
     " let g:neovide_cursor_vfx_mode = "railgun"
     " let g:neovide_cursor_vfx_opacity = 300.0
     " let g:neovide_cursor_vfx_particle_lifetime = 1.8
@@ -109,6 +122,7 @@ Plug 'preservim/vim-markdown'                       " markdown
 Plug 'kshenoy/vim-signature'                        " mark高亮
 Plug 'mg979/vim-visual-multi', {'branch': 'master'} " 多光标
 Plug 'wellle/targets.vim'                           " 更多文本对象
+Plug 'monaqa/dial.nvim'                             " C-a C-x 增强
 
 
 "一些主题
@@ -195,17 +209,17 @@ let g:airline_powerline_fonts = 1
 let g:airline#extensions#keymap#enabled = 1
 let g:airline#extensions#tabline#buffer_idx_mode = 1
 let g:airline#extensions#tabline#buffer_idx_format = {
-			\ '0': '0 ',
-			\ '1': '1 ',
-			\ '2': '2 ',
-			\ '3': '3 ',
-			\ '4': '4 ',
-			\ '5': '5 ',
-			\ '6': '6 ',
-			\ '7': '7 ',
+            \ '0': '0 ',
+            \ '1': '1 ',
+            \ '2': '2 ',
+            \ '3': '3 ',
+            \ '4': '4 ',
+            \ '5': '5 ',
+            \ '6': '6 ',
+            \ '7': '7 ',
             \ '8': '8 ',
-			\ '9': '9 '
-			\}
+            \ '9': '9 '
+            \}
 let g:airline#extensions#ale#enabled = 1
 " 设置切换tab的快捷键 <\> + <i> 切换到第i个 tab
 nnoremap <leader>1 <Plug>AirlineSelectTab1
@@ -225,7 +239,7 @@ nnoremap <leader>+ <Plug>AirlineSelectNextTab
 nnoremap <leader>q :bp<cr>:bd #<cr>
 " 修改了一些个人不喜欢的字符
 if !exists('g:airline_symbols')
-	let g:airline_symbols = {}
+    let g:airline_symbols = {}
 endif
 let g:airline_symbols.linenr = "CL" " current line
 let g:airline_symbols.whitespace = '|'
@@ -300,11 +314,11 @@ nmap <silent> gr <Plug>(coc-references)
 nnoremap <silent> K :call ShowDocumentation()<CR>
 
 function! ShowDocumentation()
-	if CocAction('hasProvider', 'hover')
-		call CocActionAsync('doHover')
-	else
-		call feedkeys('K', 'in')
-	endif
+    if CocAction('hasProvider', 'hover')
+        call CocActionAsync('doHover')
+    else
+        call feedkeys('K', 'in')
+    endif
 endfunction
 
 autocmd CursorHold * silent call CocActionAsync('highlight')
@@ -435,3 +449,73 @@ nnoremap <leader>st :SignatureToggleSigns<CR>
 
 " markdown
 let g:vim_markdown_conceal = 0
+let g:vim_markdown_folding_disabled = 1
+let g:vim_markdown_frontmatter = 1
+
+" dial.nvim
+nmap  <C-a>  <Plug>(dial-increment)
+nmap  <C-x>  <Plug>(dial-decrement)
+vmap  <C-a>  <Plug>(dial-increment)
+vmap  <C-x>  <Plug>(dial-decrement)
+vmap g<C-a> g<Plug>(dial-increment)
+vmap g<C-x> g<Plug>(dial-decrement)
+
+lua << EOF
+local augend = require("dial.augend")
+require("dial.config").augends:register_group{
+  default = {
+    augend.integer.alias.decimal_int,
+    augend.integer.alias.hex,
+    augend.integer.alias.binary,
+    augend.date.alias["%Y/%m/%d"],
+    augend.date.alias["%Y-%m-%d"],
+    augend.date.alias["%Y年%-m月%-d日"],
+    augend.date.alias["%Y年%-m月%-d日(%ja)"],
+    augend.date.alias["%H:%M:%S"],
+    augend.date.alias["%H:%M"],
+    augend.date.new{
+        pattern = "%Y.%m.%d",
+        default_kind = "day",
+        only_valid = true,
+        word = false,
+    },
+    augend.constant.alias.bool,
+    augend.constant.new{
+      elements = {"and", "or"},
+      word = true,
+      cyclic = true,
+    },
+    augend.constant.new{
+      elements = {"&&", "||"},
+      word = false,
+      cyclic = true,
+    },
+    augend.semver.alias.semver,
+  },
+  visual = {
+    augend.integer.alias.decimal_int,
+    augend.integer.alias.hex,
+    augend.integer.alias.binary,
+    augend.date.alias["%Y/%m/%d"],
+    augend.date.alias["%Y-%m-%d"],
+    augend.date.alias["%Y年%-m月%-d日"],
+    augend.date.alias["%Y年%-m月%-d日(%ja)"],
+    augend.date.alias["%H:%M:%S"],
+    augend.date.alias["%H:%M"],
+    augend.date.new{
+        pattern = "%Y.%m.%d",
+        default_kind = "day",
+        only_valid = true,
+        word = false,
+    },
+    augend.constant.alias.bool,
+    augend.semver.alias.semver,
+    augend.constant.alias.alpha,
+    augend.constant.alias.Alpha,
+  },
+}
+
+-- change augends in VISUAL mode
+vim.keymap.set("v", "<C-a>", require("dial.map").inc_visual("visual"), {noremap = true})
+vim.keymap.set("v", "<C-x>", require("dial.map").dec_visual("visual"), {noremap = true})
+EOF

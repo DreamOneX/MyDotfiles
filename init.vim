@@ -1,31 +1,31 @@
 filetype plugin on
 set nocompatible
+syntax on               " 开启高亮
 
 echo "(≧▽≦) NeoVim is starting"
 set backspace=indent,eol,start
-set shell=/usr/bin/zsh         " 设置shell
-syntax on                      " 开启高亮
-set number                     " 显示行号
-set mouse=a                    " 开启鼠标
-set laststatus=2               " 显示状态栏
+set shell=/usr/bin/zsh  " 设置shell
+set number              " 显示行号
+set mouse=a             " 开启鼠标
+set laststatus=2        " 显示状态栏
 set ambiwidth=double
 set t_Co=256
-set history=10000              " 历史
-set autoindent                 " 自动缩进
+set history=10000       " 历史
+set autoindent          " 自动缩进
 set cindent
-set tabstop=4                  " tab长度
+set tabstop=4           " tab长度
 set expandtab
 set shiftwidth=4
 set incsearch
-set smartindent                " 缩进
-set hlsearch                   " 高亮搜索
-set undofile                   " 撤销文件
+set smartindent         " 缩进
+set hlsearch            " 高亮搜索
+set undofile            " 撤销文件
 set undodir=~/.vim/undo
-set cursorline                 " 高亮当前行
-set ignorecase                 " 无视大小写
+set cursorline          " 高亮当前行
+set ignorecase          " 无视大小写
 set background=dark
-set nrformats=bin,hex          " C-a C-x 设置
-set conceallevel=1             " 不隐藏特殊字符
+set nrformats=bin,hex   " C-a C-x 设置
+set conceallevel=1      " 不隐藏特殊字符
 
 set signcolumn=yes
 set updatetime=300

@@ -223,7 +223,7 @@ function new() {
 }
 
 function fzfparu() {
-    paru -S $(paru -Sl | fzf -m --preview 'paru -Si {2}' | awk '{print $2}' | tr '\n' ' ')
+    paru -Sl | fzf -m --preview 'paru -Si {2}' | awk '{print $2}' | tr '\n' ' ' | xargs -or paru -S
 }
 
 alias t='todo.sh'

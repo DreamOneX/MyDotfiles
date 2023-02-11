@@ -201,8 +201,6 @@ export LESS_TERMCAP_so=$'\E[01;33;44m'
 export LESS_TERMCAP_se=$'\E[0m'
 export VISUAL=nvim
 
-alias gay=git
-
 alias rsync=srsync
 function cpr() {
   rsync --archive -hh --partial --info=stats1,progress2 --modify-window=1 "$@"
@@ -222,6 +220,10 @@ function new() {
         mkdir -p "${i%/*}"
         touch "$i"
     done
+}
+
+function fzfparu() {
+    paru -S $(paru -Sl | fzf -m --preview 'paru -Si {2}' | awk '{print $2}' | tr '\n' ' ')
 }
 
 alias t='todo.sh'

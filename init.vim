@@ -4,6 +4,8 @@ syntax on               " 开启高亮
 
 echo "(≧▽≦) NeoVim is starting"
 set backspace=indent,eol,start
+set encoding=utf-8
+set fileencodings=utf-8,gbk,gb2312,cp936
 set shell=/usr/bin/zsh  " 设置shell
 set number              " 显示行号
 set mouse=a             " 开启鼠标
@@ -92,6 +94,9 @@ nnoremap <C-h> :NERDTreeToggle<CR> " 按<C-h>打开NERDTree
 nnoremap <leader>nf :NERDTreeFind<CR>
 nnoremap <silent> <C-j> :TagbarToggle<CR> "按<C-j>打开tagbar
 
+noremap ^~ <ESC>
+
+
 "vim-plug start
 call plug#begin('~/.vim/plugged')
 Plug 'yianwillis/vimcdoc'                           " 中文文档
@@ -123,9 +128,9 @@ Plug 'kshenoy/vim-signature'                        " mark高亮
 Plug 'mg979/vim-visual-multi', {'branch': 'master'} " 多光标
 Plug 'wellle/targets.vim'                           " 更多文本对象
 Plug 'monaqa/dial.nvim'                             " C-a C-x 增强
+Plug 'tpope/vim-surround'                           " surround
 
-
-"一些主题
+" 一些主题
 Plug 'crusoexia/vim-monokai'
 Plug 'morhetz/gruvbox'
 Plug 'tomasr/molokai'
@@ -143,6 +148,7 @@ Plug 'ayu-theme/ayu-vim'
 call plug#end()
 "vim-plug end
 
+colorscheme atom-dark
 
 let g:AutoPairs = {'(':')', '[':']', '{':'}',"'":"'",'"':'"', '<':'>'}
 let g:indent_guides_guide_size = 1  " 对齐线的尺寸
@@ -204,7 +210,7 @@ let g:airline#extensions#tabline#enabled = 1
 let g:airline#extensions#tabline#left_alt_sep = '|'
 let g:airline#extensions#tabline#buffer_nr_show = 0
 let g:airline#extensions#tabline#formatter = 'default'
-" let g:airline_theme = 'desertink'  " 主题
+" let g:airline_theme = 'badwolf'  " 主题
 let g:airline_powerline_fonts = 1
 let g:airline#extensions#keymap#enabled = 1
 let g:airline#extensions#tabline#buffer_idx_mode = 1
@@ -248,7 +254,6 @@ let g:airline_symbols.branch = 'BR'
 let g:airline_symbols.readonly = "RO"
 let g:airline_symbols.dirty = "DT"
 let g:airline_symbols.crypt = "CR"
-colo atom-dark
 
 "copilot
 let g:copilot_node_command = "~/.vim/local/node16/bin/node"
@@ -428,9 +433,20 @@ nnoremap <leader>af :Autoformat<CR>
 
 " LeaderF
 let g:Lf_RootMarkers = ['.git', '.svn', '.hg', '.project', '.root']
-nnoremap <leader>lr :Leaderf rg<CR>
-nnoremap <leader>ll :LeaderfLine<CR>
-nnoremap <leader>lf :LeaderfFile<CR>
+nnoremap <silent> <space><space>r :Leaderf rg<CR>
+nnoremap <silent> <space><space>l :LeaderfLine<CR>
+nnoremap <silent> <space><space>f :LeaderfFile<CR>
+nnoremap <silent> <space><space>b :LeaderfBuffer<CR>
+nnoremap <silent> <space><space>m :LeaderfMru<CR>
+nnoremap <silent> <space><space>t :LeaderfTag<CR>
+nnoremap <silent> <space><space>i :LeaderfFunction<CR>
+nnoremap <silent> <space><space>cl :LeaderfLineCword<CR>
+nnoremap <silent> <space><space>cf :LeaderfFileCword<CR>
+nnoremap <silent> <space><space>cb :LeaderfBufferCword<CR>
+nnoremap <silent> <space><space>cm :LeaderfMruCword<CR>
+nnoremap <silent> <space><space>ct :LeaderfTagCword<CR>
+nnoremap <silent> <space><space>ci :LeaderfFunctionCword<CR>
+
 " Mundo
 nnoremap <leader>ms :MundoShow<CR>
 nnoremap <leader>mh :MundoHide<CR>
@@ -440,7 +456,7 @@ let b:ale_linters = ['flake8', 'pylint', 'ktlint']
 let b:ale_fixers = ['autopep8', 'yapf']
 let g:ale_disable_lsp = 1
 
-let g:ale_python_pylint_options = '-d=line-too-long -d=missing-function-docstring -d=missing-module-docstring --good-names f,fg,bg'
+let g:ale_python_pylint_options = '-d=line-too-long -d=missing-function-docstring -d=missing-module-docstring --good-names i,j,k,f,fg,bg'
 let g:ale_python_flake8_options = '--ignore E501'
 
 " signature

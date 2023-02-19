@@ -138,7 +138,9 @@ zinit ice lucid wait='0'; zinit light djui/alias-tips
 # 配置
 #历史搜索
 bindkey '^[[A' history-substring-search-up
+bindkey '^P' history-substring-search-up
 bindkey '^[[B' history-substring-search-down
+bindkey '^N' history-substring-search-down
 typeset -g HISTORY_SUBSTRING_SEARCH_PREFIXED=1
 
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
@@ -185,6 +187,9 @@ alias fd='fd -HI'
 alias p='proxychains -q'
 alias sp="paru -Sl | fzf | awk '{print \$2}'"
 
+alias e='neovide --multigrid'
+alias et='neovide --multigrid ~/.todo/todo.txt'
+
 eval $(thefuck --alias)
 # You can use whatever you want as an alias, like for Mondays:
 eval $(thefuck --alias FUCK)
@@ -222,8 +227,12 @@ function new() {
     done
 }
 
-function fzfparu() {
-    paru -Sl | fzf -m --preview 'paru -Si {2}' | awk '{print $2}' | tr '\n' ' ' | xargs -or paru -S
+function skp() {
+    paru -Sl | sk -m --preview 'paru -Si {2}' | awk '{print $2}' | xargs -or paru -S
+}
+
+function rmcolor() {
+    sed -r "s/\x1B\[[0-9;]*[mK]//g"
 }
 
 alias t='todo.sh'

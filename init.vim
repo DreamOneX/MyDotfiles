@@ -25,6 +25,7 @@ set undofile            " 撤销文件
 set undodir=~/.vim/undo
 set cursorline          " 高亮当前行
 set ignorecase          " 无视大小写
+set smartcase
 set background=dark
 set nrformats=bin,hex   " C-a C-x 设置
 set conceallevel=1      " 不隐藏特殊字符
@@ -59,15 +60,15 @@ if exists("g:neovide")
     let g:neovide_floating_blur_amount_y = 2.0
     let g:transparency = 0.8
     let g:neovide_transparency = 0.8
-    let g:neovide_cursor_vfx_mode = "pixiedust"
-    let g:neovide_cursor_vfx_opacity = 300.0
-    let g:neovide_cursor_vfx_particle_lifetime = 4.2
-    let g:neovide_cursor_vfx_particle_density = 32.0
-    let g:neovide_cursor_vfx_particle_speed = 8.0
-    let g:neovide_cursor_vfx_particle_phase = 1.2
-    let g:neovide_cursor_vfx_particle_curl = 0.6
-    let g:neovide_cursor_animation_length = 0.05
-    let g:neovide_cursor_trail_size = 0.8
+    " let g:neovide_cursor_vfx_mode = "pixiedust"
+    " let g:neovide_cursor_vfx_opacity = 300.0
+    " let g:neovide_cursor_vfx_particle_lifetime = 4.2
+    " let g:neovide_cursor_vfx_particle_density = 32.0
+    " let g:neovide_cursor_vfx_particle_speed = 8.0
+    " let g:neovide_cursor_vfx_particle_phase = 1.2
+    " let g:neovide_cursor_vfx_particle_curl = 0.6
+    " let g:neovide_cursor_animation_length = 0.05
+    " let g:neovide_cursor_trail_size = 0.8
     " let g:neovide_cursor_vfx_mode = "railgun"
     " let g:neovide_cursor_vfx_opacity = 300.0
     " let g:neovide_cursor_vfx_particle_lifetime = 1.8
@@ -79,23 +80,25 @@ if exists("g:neovide")
 endif
 
 let mapleader = "\\"
+let maplocalleader = "\\\\"
 
 iabbrev @@ DreamOneX <me@dreamonex.eu.org>
 
 nnoremap <leader>pp :set paste!<CR>
 tnoremap <ESC><ESC><ESC><ESC> <C-\><C-n>
 
-nnoremap <leader>ev :split $MYVIMRC<CR>
-nnoremap <leader>rl :source $MYVIMRC<CR>
-nnoremap <leader>evd :e $MYVIMRC<CR>
+nnoremap <silent> <leader>ev :split $MYVIMRC<CR>
+nnoremap <silent> <leader>rl :source $MYVIMRC<CR>
+nnoremap <silent> <leader>evd :e $MYVIMRC<CR>
 nnoremap <silent> <space>r :set relativenumber!<CR>
 
-nnoremap <C-h> :NERDTreeToggle<CR> " 按<C-h>打开NERDTree
-nnoremap <leader>nf :NERDTreeFind<CR>
-nnoremap <silent> <C-j> :TagbarToggle<CR> "按<C-j>打开tagbar
+nnoremap <silent> <C-k> :NERDTreeToggle<CR>
+nnoremap <silent> <C-h> :NERDTreeFind<CR>
+nnoremap <silent> <C-j> :NERDTreeRefreshRoot<CR>
 
 noremap ^~ <ESC>
 
+nnoremap <Leader>expt :%s/	/    /g<CR>
 
 "vim-plug start
 call plug#begin('~/.vim/plugged')
@@ -129,6 +132,7 @@ Plug 'mg979/vim-visual-multi', {'branch': 'master'} " 多光标
 Plug 'wellle/targets.vim'                           " 更多文本对象
 Plug 'monaqa/dial.nvim'                             " C-a C-x 增强
 Plug 'tpope/vim-surround'                           " surround
+Plug 'freitass/todo.txt-vim'                        " todo.txt
 
 " 一些主题
 Plug 'crusoexia/vim-monokai'
@@ -154,6 +158,7 @@ let g:AutoPairs = {'(':')', '[':']', '{':'}',"'":"'",'"':'"', '<':'>'}
 let g:indent_guides_guide_size = 1  " 对齐线的尺寸
 let g:indent_guides_start_level = 1  " 可视化显示缩进层数
 let g:indentLine_color_term = 239
+
 " <\>+<c>+<SPC> 在Normal和Visual模式下添加或去除注释
 "add spaces after comment delimiters by default
 let g:NERDSpaceDelims = 1
@@ -172,6 +177,7 @@ let g:NERDCommentEmptyLines = 1
 let g:NERDTrimTrailingWhitespace = 1
 " Enable NERDCommenterToggle to check all selected lines is commented or not
 let g:NERDToggleCheckAllLines = 1
+
 let g:NERDTreeWinSize = 25
 let g:NERDTreeDirArrowExpandable = '+'
 let g:NERDTreeDirArrowCollapsible = '-'
@@ -385,30 +391,25 @@ xmap <silent> <C-s> <Plug>(coc-range-select)
 
 autocmd FileType scss setl iskeyword+=@-@
 
-" Use <C-l> for trigger snippet expand.
-imap <C-l> <Plug>(coc-snippets-expand)
+" " Use <C-l> for trigger snippet expand.
+" imap <C-l> <Plug>(coc-snippets-expand)
+"
+" " Use <C-j> for select text for visual placeholder of snippet.
+" vmap <C-j> <Plug>(coc-snippets-select)
+"
+" " Use <C-j> for jump to next placeholder, it's default of coc.nvim
+" let g:coc_snippet_next = '<c-j>'
+"
+" " Use <C-k> for jump to previous placeholder, it's default of coc.nvim
+" let g:coc_snippet_prev = '<c-k>'
+"
+" " Use <C-j> for both expand and jump (make expand higher priority.)
+" imap <C-j> <Plug>(coc-snippets-expand-jump)
+"
+" " Use <leader>x for convert visual selected code to snippet
+" xmap <leader>x  <Plug>(coc-convert-snippet)
 
-" Use <C-j> for select text for visual placeholder of snippet.
-vmap <C-j> <Plug>(coc-snippets-select)
-
-" Use <C-j> for jump to next placeholder, it's default of coc.nvim
-let g:coc_snippet_next = '<c-j>'
-
-" Use <C-k> for jump to previous placeholder, it's default of coc.nvim
-let g:coc_snippet_prev = '<c-k>'
-
-" Use <C-j> for both expand and jump (make expand higher priority.)
-imap <C-j> <Plug>(coc-snippets-expand-jump)
-
-" Use <leader>x for convert visual selected code to snippet
-xmap <leader>x  <Plug>(coc-convert-snippet)
-
-function! s:check_back_space() abort
-  let col = col('.') - 1
-  return !col || getline('.')[col - 1]  =~# '\s'
-endfunction
-
-let g:coc_snippet_next = '<tab>'
+" let g:coc_snippet_next = '<tab>'
 
 nmap <Leader>tp <Plug>(coc-translator-p)
 vmap <Leader>tp <Plug>(coc-translator-pv)
@@ -418,6 +419,8 @@ vmap <Leader>te <Plug>(coc-translator-ev)
 
 nmap <Leader>tr <Plug>(coc-translator-r)
 vmap <Leader>tr <Plug>(coc-translator-rv)
+
+nnoremap <silent> <space><space>oc :CocList<CR>
 
 " autoformat
 let g:autoformat_verbosemode=1

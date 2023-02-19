@@ -17,6 +17,6 @@
     "rust-analyzer.enable": true,
     "rust-analyzer.server.path": "/usr/bin/rust-analyzer",
     "rust-analyzer.inlayHints.bindingModeHints.enable": true,
-    "rust-analyzer.inlayHints.closureReturnTypeHints.enable": true,
-    "rust-analyzer.inlayHints.reborrowHints.enable": true,
+    "rust-analyzer.inlayHints.closureReturnTypeHints.enable": "with_block",
+    "rust-analyzer.inlayHints.reborrowHints.enable": "always",
 }

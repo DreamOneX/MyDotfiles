@@ -19,7 +19,7 @@ set tabstop=4           " tab长度
 set expandtab
 set shiftwidth=4
 set incsearch
-set smartindent         " 缩进
+set smartindent         " dian k k缩进
 set hlsearch            " 高亮搜索
 set undofile            " 撤销文件
 set undodir=~/.vim/undo
@@ -58,8 +58,9 @@ if exists("g:neovide")
     let g:neovide_scale_factor = 1.0
     let g:neovide_floating_blur_amount_x = 2.0
     let g:neovide_floating_blur_amount_y = 2.0
-    let g:transparency = 0.8
-    let g:neovide_transparency = 0.8
+    " let g:transparency = 0.8
+    " let g:neovide_transparency = 0.8
+    " let g:neovide_cursor_animation_length = 0
     " let g:neovide_cursor_vfx_mode = "pixiedust"
     " let g:neovide_cursor_vfx_opacity = 300.0
     " let g:neovide_cursor_vfx_particle_lifetime = 4.2
@@ -113,6 +114,7 @@ Plug 'ryanoasis/vim-devicons'                       " NerdFonts
 Plug 'johnstef99/vim-nerdtree-syntax-highlight'
 Plug 'Xuyuanp/nerdtree-git-plugin'                  " NerdTree Git
 Plug 'PhilRunninger/nerdtree-visual-selection'      " NerdTree Ops
+Plug 'ActivityWatch/aw-watcher-vim'
 
 Plug 'majutsushi/tagbar'                            " ctags
 Plug 'Yggdroot/LeaderF', { 'do': './install.sh'  }  " 搜索
@@ -133,8 +135,9 @@ Plug 'wellle/targets.vim'                           " 更多文本对象
 Plug 'monaqa/dial.nvim'                             " C-a C-x 增强
 Plug 'tpope/vim-surround'                           " surround
 Plug 'freitass/todo.txt-vim'                        " todo.txt
+Plug 'justinmk/vim-sneak'                           " 2 字母ft
+Plug 'unblevable/quick-scope'                       " ft highlight
 
-" 一些主题
 Plug 'crusoexia/vim-monokai'
 Plug 'morhetz/gruvbox'
 Plug 'tomasr/molokai'
@@ -459,7 +462,7 @@ let b:ale_linters = ['flake8', 'pylint', 'ktlint']
 let b:ale_fixers = ['autopep8', 'yapf']
 let g:ale_disable_lsp = 1
 
-let g:ale_python_pylint_options = '-d=line-too-long -d=missing-function-docstring -d=missing-module-docstring --good-names i,j,k,f,fg,bg'
+let g:ale_python_pylint_options = '-d=line-too-long -d=missing-function-docstring -d=missing-module-docstring --good-names i,j,k,f,e,s,r,a,b,c,d,fg,bg'
 let g:ale_python_flake8_options = '--ignore E501'
 
 " signature
@@ -470,6 +473,16 @@ nnoremap <leader>st :SignatureToggleSigns<CR>
 let g:vim_markdown_conceal = 0
 let g:vim_markdown_folding_disabled = 1
 let g:vim_markdown_frontmatter = 1
+
+" quick scope
+let g:qs_highlight_on_keys = ['f', 'F', 't', 'T', 's', 'S']
+let g:qs_buftype_blacklist = ['terminal', 'nofile']
+let g:qs_filetype_blacklist = ['dashboard', 'startify', 'nerdtree']
+augroup qs_color
+    autocmd!
+    autocmd ColorScheme * highlight QuickScopePrimary guifg='#afff5f' gui=underline ctermfg=155 cterm=underline
+    autocmd ColorScheme * highlight QuickScopeSecondary guifg='#5fffff' gui=underline ctermfg=81 cterm=underline
+augroup END
 
 " dial.nvim
 nmap  <C-a>  <Plug>(dial-increment)
@@ -499,6 +512,11 @@ require("dial.config").augends:register_group{
         word = false,
     },
     augend.constant.alias.bool,
+    augend.constant.new{
+      elements = {"False", "True"},
+      word = true,
+      cyclic = true,
+    },
     augend.constant.new{
       elements = {"and", "or"},
       word = true,

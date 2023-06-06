@@ -44,6 +44,8 @@ if executable('fcitx5-remote')
     autocmd InsertEnter * if insertstate == 2 | call system('fcitx5-remote -o') | endif
 endif
 
+autocmd BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
+
 if has("termguicolors")
     " fix bug for vim
     set t_8f=[38;2;%lu;%lu;%lum
@@ -58,8 +60,8 @@ if exists("g:neovide")
     let g:neovide_scale_factor = 1.0
     let g:neovide_floating_blur_amount_x = 2.0
     let g:neovide_floating_blur_amount_y = 2.0
-    " let g:transparency = 0.8
-    " let g:neovide_transparency = 0.8
+    let g:transparency = 0.8
+    let g:neovide_transparency = 0.8
     " let g:neovide_cursor_animation_length = 0
     " let g:neovide_cursor_vfx_mode = "pixiedust"
     " let g:neovide_cursor_vfx_opacity = 300.0
@@ -97,7 +99,8 @@ nnoremap <silent> <C-k> :NERDTreeToggle<CR>
 nnoremap <silent> <C-h> :NERDTreeFind<CR>
 nnoremap <silent> <C-j> :NERDTreeRefreshRoot<CR>
 
-noremap ^~ <ESC>
+noremap -= <ESC>
+inoremap -= <ESC>
 
 nnoremap <Leader>expt :%s/	/    /g<CR>
 
@@ -114,7 +117,7 @@ Plug 'ryanoasis/vim-devicons'                       " NerdFonts
 Plug 'johnstef99/vim-nerdtree-syntax-highlight'
 Plug 'Xuyuanp/nerdtree-git-plugin'                  " NerdTree Git
 Plug 'PhilRunninger/nerdtree-visual-selection'      " NerdTree Ops
-Plug 'ActivityWatch/aw-watcher-vim'
+" Plug 'ActivityWatch/aw-watcher-vim'
 
 Plug 'majutsushi/tagbar'                            " ctags
 Plug 'Yggdroot/LeaderF', { 'do': './install.sh'  }  " 搜索
@@ -137,6 +140,7 @@ Plug 'tpope/vim-surround'                           " surround
 Plug 'freitass/todo.txt-vim'                        " todo.txt
 Plug 'justinmk/vim-sneak'                           " 2 字母ft
 Plug 'unblevable/quick-scope'                       " ft highlight
+Plug 'purofle/vim-mindustry-logic'
 
 Plug 'crusoexia/vim-monokai'
 Plug 'morhetz/gruvbox'
@@ -152,6 +156,8 @@ Plug 'altercation/vim-colors-solarized'
 Plug 'ciaranm/inkpot'
 Plug 'NLKNguyen/papercolor-theme'
 Plug 'ayu-theme/ayu-vim'
+
+Plug 'neoclide/coc-lists', { 'do': 'yarn install --frozen-lockfile' }
 call plug#end()
 "vim-plug end
 
@@ -194,6 +200,12 @@ let g:NERDTreeHighlightFoldersFullName = 1 " highlights the folder name
 let g:NERDTreeExtensionHighlightColor = {}
 let g:NERDTreeExtensionHighlightColor['xml'] = '8FAA54'
 let g:NERDTreeExtensionHighlightColor['yaml'] = '8FAA54'
+
+let g:rainbow_conf = {
+        \   'separately': {
+        \       'nerdtree': 0,
+    \   }
+    \}
 
 " let g:webdevicons_enable_nerdtree = 0
 
@@ -264,16 +276,18 @@ let g:airline_symbols.readonly = "RO"
 let g:airline_symbols.dirty = "DT"
 let g:airline_symbols.crypt = "CR"
 
-"copilot
-let g:copilot_node_command = "~/.vim/local/node16/bin/node"
+" copilot
+" let g:copilot_node_command = "~/.vim/local/node16/bin/node"
 imap <silent><script><expr> <M-t> copilot#Accept("\<CR>")
+imap <silent> <M-n> <Plug>(copilot-next)
+imap <silent> <M-p> <Plug>(copilot-prev)
 let g:copilot_no_tab_map = v:true
 
-"ZFVimIm
-let g:zf_git_user_email='me@dreamonex.eu.org'
-let g:zf_git_user_name='DreamOneX'
-let g:zf_git_user_token='¿'
-let g:ZFVimIM_keymap=0
+" ZFVimIm
+" let g:zf_git_user_email='me@dreamonex.eu.org'
+" let g:zf_git_user_name='DreamOneX'
+" let g:zf_git_user_token='¿'
+" let g:ZFVimIM_keymap=0
 
 " 更改快捷键
 map <space> <Plug>(easymotion-prefix)

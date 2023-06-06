@@ -190,12 +190,12 @@ alias sp="paru -Sl | fzf | awk '{print \$2}'"
 alias e='neovide --multigrid'
 alias et='neovide --multigrid ~/.todo/todo.txt'
 
-eval $(thefuck --alias)
+# eval $(thefuck --alias)
 # You can use whatever you want as an alias, like for Mondays:
-eval $(thefuck --alias FUCK)
+# eval $(thefuck --alias FUCK)
 export GPG_TTY=$(tty)
-export SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
-echo UPDATESTARTUPTTY | gpg-connect-agent 1> /dev/null
+# export SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
+# echo UPDATESTARTUPTTY | gpg-connect-agent 1> /dev/null
 
 export LESS_TERMCAP_mb=$'\E[01;34m'
 export LESS_TERMCAP_md=$'\E[01;34m'

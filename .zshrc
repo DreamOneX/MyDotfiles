@@ -91,9 +91,6 @@ zinit light-mode for \
 
 ### End of Zinit's installer chunk
 
-
-
-zinit light Aloxaf/fzf-tab && enable-fzf-tab
 # disable sort when completing `git checkout`
 zstyle ':completion:*:git-checkout:*' sort false
 # set descriptions format to enable group support
@@ -104,20 +101,18 @@ zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
 zstyle ':fzf-tab:complete:cd:*' fzf-preview 'exa -1 --color=always $realpath'
 # switch group using `,` and `.`
 zstyle ':fzf-tab:*' switch-group ',' '.'
-#历史搜索
-zinit light zsh-users/zsh-history-substring-search
 
 # Load Oh MY Zsh Plugins
 #git alias
-zinit snippet OMZ::plugins/git/git.plugin.zsh
+zinit ice lucid wait; zinit snippet OMZ::plugins/git/git.plugin.zsh
 #解压
-zinit snippet OMZ::plugins/extract/extract.plugin.zsh
+zinit ice lucid wait; zinit snippet OMZ::plugins/extract/extract.plugin.zsh
 #history格式化及alias
-zinit snippet OMZ::lib/history.zsh
+zinit ice lucid wait; zinit snippet OMZ::lib/history.zsh
 #如果命令不存在，会提醒你可能缺失的依赖
-zinit snippet OMZ::plugins/command-not-found/command-not-found.plugin.zsh
+zinit ice lucid wait; zinit snippet OMZ::plugins/command-not-found/command-not-found.plugin.zsh
 #sudo
-zinit snippet OMZ::plugins/sudo/sudo.plugin.zsh
+zinit ice lucid wait; zinit snippet OMZ::plugins/sudo/sudo.plugin.zsh
 
 eval "$(zoxide init zsh)"
 
@@ -126,21 +121,19 @@ eval "$(zoxide init zsh)"
 #p10k主题
 zinit ice depth=1; zinit light romkatv/powerlevel10k
 #命令高亮
-zinit ice lucid wait='0' atinit='zpcompinit'; zinit light zdharma/fast-syntax-highlighting
+zinit ice lucid wait atinit"ZINIT[COMPINIT_OPTS]=-C; zicompinit; zicdreplay"; zinit light zdharma-continuum/fast-syntax-highlighting
 #命令补全建议
 zinit ice wait lucid atload'_zsh_autosuggest_start'; zinit light zsh-users/zsh-autosuggestions
+# fzf-tab
+zinit ice wait lucid atload'enable-fzf-tab'; zinit light Aloxaf/fzf-tab
 #命令补全
-zinit ice lucid wait='0'; zinit light zsh-users/zsh-completions
+zinit ice lucid wait; zinit light zsh-users/zsh-completions
 #Alias提醒
-zinit ice lucid wait='0'; zinit light djui/alias-tips
-
+zinit ice lucid wait; zinit light djui/alias-tips
+#历史搜索
+zinit ice lucid wait atload"bindkey '^[[A' history-substring-search-up; bindkey '^P' history-substring-search-up; bindkey '^[[B' history-substring-search-down; bindkey '^N' history-substring-search-down"; zinit light zsh-users/zsh-history-substring-search
 
 # 配置
-#历史搜索
-bindkey '^[[A' history-substring-search-up
-bindkey '^P' history-substring-search-up
-bindkey '^[[B' history-substring-search-down
-bindkey '^N' history-substring-search-down
 typeset -g HISTORY_SUBSTRING_SEARCH_PREFIXED=1
 
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh

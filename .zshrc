@@ -91,6 +91,9 @@ zinit light-mode for \
 
 ### End of Zinit's installer chunk
 
+autoload -U url-quote-magic
+zle -N self-insert url-quote-magic
+
 # disable sort when completing `git checkout`
 zstyle ':completion:*:git-checkout:*' sort false
 # set descriptions format to enable group support
@@ -221,7 +224,7 @@ function new() {
 }
 
 function skp() {
-    paru -Sl | sk -m --preview 'paru -Si {2}' | awk '{print $2}' | xargs -or paru -S
+    paru -Sl | sk -m --preview 'paru -Si {2}' --height 90% --reverse --border --inline-info --preview-window=down:80% | awk '{print $2}' | xargs -or paru -S
 }
 
 function rmcolor() {

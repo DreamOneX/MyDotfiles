@@ -155,7 +155,6 @@ alias grep='grep --color=auto'
 alias md='mkdir -p'
 alias rd=rmdir
 alias ls="exa --color=auto" 
-# Exa is a modern version of ls. exa是一款优秀的ls替代品,拥有更好的文件展示体验,输出结果更快,使用rust编写。
 alias l='exa -lbah'
 alias la='exa -labgh'
 alias ll='exa -lbg'

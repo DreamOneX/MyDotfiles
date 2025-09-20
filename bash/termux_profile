@@ -1,0 +1,63 @@
+# vim:ft=bash:fdm=marker
+
+# {{{ profile
+# {{{ profile.utils_dir
+: "${PROFILE_UTILS_DIR:=$HOME/MyDotfiles/bash/utils}"
+# }}}
+# }}}
+
+
+# {{{ env
+# {{{ env.vars
+# {{{ env.vars.terminal
+export TERMINFO=/data/data/com.termux/files/usr/share/terminfo
+export COLORTERM=truecolor
+# }}}
+# {{{ env.vars.toolchains
+# {{{ env.vars.toolchains.android
+export ANDROID_SDK_ROOT="$HOME/Android/Sdk"
+# }}}
+# {{{ env.vars.toolchains.java
+export JAVA_HOME="$PREFIX/lib/jvm/java-17-openjdk"
+# }}}
+# {{{ env.vars.toolchains.pnpm
+export PNPM_HOME="$HOME/.local/share/pnpm"
+# }}}
+# {{{ env.vars.toolchains.paths
+tool_paths=(
+    "front:$PNPM_HOME"
+    "front:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin"
+    "front:$ANDROID_SDK_ROOT/platform-tools"
+    "$HOME/.cargo/bin"
+    "$HOME/.go/bin"
+)
+# }}}
+# }}}
+# }}}
+# {{{ env.extras
+source /data/data/com.termux/files/usr/etc/profile.d/texlive.sh
+# }}}
+# }}}
+
+# {{{ apply
+# {{{ apply.profile
+# {{{ apply.profile.utils
+source "$PROFILE_UTILS_DIR/path_env.sh"
+# }}}
+# }}}
+# {{{ apply.env
+# {{{ apply.env.vars
+# {{{ apply.env.vars.toolchains
+# {{{ apply.env.vars.toolchains.paths
+for entry in "${tool_paths[@]}"; do
+    case "$entry" in
+        front:*) path_add_front "${entry#front:}" ;;
+        back:*)  path_add_back  "${entry#back:}"  ;;
+        *)       path_add_back  "$entry"          ;;
+    esac
+done
+# }}}
+# }}}
+# }}}
+# }}}
+# }}}

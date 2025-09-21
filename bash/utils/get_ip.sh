@@ -18,141 +18,159 @@
 
 # {{{ GETIP_OUTPUT
 # GETIP_OUTPUT:
-#   - ip_only     = only the IP address (default)
-#   - iface_ip    = interface name and IP address
-#   - json        = JSON format with details
+#   ip_only   = only the IP address (default)
+#   iface_ip  = interface name followed by IP address
+#   json      = JSON format with details
 : "${GETIP_OUTPUT:=ip_only}"
 # }}}
 
 # {{{ GETIP_IFACE_LAN_ORDER
 # GETIP_IFACE_LAN_ORDER:
-#   - default order: eth0, wlan0, enp0s3, wlp2s0, eth1, wlan1, eth2, wlan2, lo
-#   NOTE: modify this list to match your system's common LAN interfaces
-#   NOTE: remove any interface you don't want to use
-#   NOTE: 'lo' is the loopback interface, usually, keep it at the end of the list
+#   default order: eth0, wlan0, enp0s3, wlp2s0, eth1, wlan1, eth2, wlan2, lo
+#   adjust to match the preferred LAN interface priority on your system
 : "${GETIP_IFACE_LAN_ORDER:="eth0 wlan0 enp0s3 wlp2s0 eth1 wlan1 eth2 wlan2 lo"}"
 # }}}
 
 # {{{ GETIP_IFACE_WAN_ORDER
 # GETIP_IFACE_WAN_ORDER:
-#  - default order: ppp0, tun0, wg0, utun0, lo
-#  NOTE: modify this list to match your system's common WAN interfaces
-#  NOTE: remove any interface you don't want to use
-#  NOTE: 'lo' is the loopback interface, usually, keep it at the end of the list
-#  NOTE: WAN interfaces may be virtual (VPN, SSH tunnel, etc.)
-#  NOTE: WAN interfaces may not be present on all systems
-#  NOTE: WAN interfaces may not have a public IP address
-#  NOTE: WAN interfaces may be slower than LAN interfaces
-#  NOTE: WAN interfaces may be less reliable than LAN interfaces
-#  NOTE: WAN interfaces may be a privacy risk
-#  NOTE: WAN interfaces may require special configuration
-#  NOTE: WAN interfaces may not be supported by all backends
-#  NOTE: WAN interfaces may not be supported by all systems
-#  NOTE: WAN interfaces may not be supported by all network managers
-#  NOTE: WAN interfaces may not be supported by all cloud providers
-#  NOTE: WAN interfaces may not be supported by all ISPs
-#  NOTE: WAN interfaces may not be supported by all VPN providers
+#   default order: ppp0, tun0, wg0, utun0, lo
+#   tune this list when VPN/PPP interfaces have priority for public lookups
 : "${GETIP_IFACE_WAN_ORDER:="ppp0 tun0 wg0 utun0 lo"}"
 # }}}
 
 # {{{ GETIP_BACKEND_LAN_ORDER
 # GETIP_BACKEND_LAN_ORDER:
-#   - ip       = use the 'ip' command
-#   - ifconfig = use the 'ifconfig' command
-#   - hostname = use the 'hostname -I' command
-#   - nmcli    = use the 'nmcli' command
-#   - proc     = read from /proc
-#   - curl     = use an external service (may be slow, unreliable, privacy risk, etc.)
-#   - custom   = if you want to add your own implementation, please set the env to a command which returns the IP
-#   - text     = if you want to hardcode an IP, please refer to the custom backend, like this "echo 127.0.0.1"
-#   NOTE: curl requires internet access and an external service
-#   NOTE: remove any backend you don't want to use
-#   default order: ifconfig, ip, hostname, nmcli, /proc, curl
+#   ip       = use the `ip` command
+#   ifconfig = use the `ifconfig` command
+#   hostname = use `hostname -I`
+#   nmcli    = query NetworkManager via `nmcli`
+#   proc     = read kernel tables under /proc
+#   curl     = query public HTTP services
+#   custom   = execute GETIP_CUSTOM_COMMAND (must print an IP)
+#   text     = echo GETIP_TEXT_VALUE verbatim (must be an IP)
+#   default order: ifconfig, ip, hostname, nmcli, proc, curl
 : "${GETIP_BACKEND_LAN_ORDER:="ifconfig ip hostname nmcli proc curl"}"
 # }}}
 
 # {{{ GETIP_BACKEND_WAN_ORDER
 # GETIP_BACKEND_WAN_ORDER:
-#  - it is the same as GETIP_BACKEND_LAN_ORDER.
-#  - default order: curl, custom, text
+#   preferred public lookup backends (same keywords as above)
+#   default order: curl, custom, text
 : "${GETIP_BACKEND_WAN_ORDER:="curl custom text"}"
 # }}}
 
-# {{{ GETIP_BACKEND_CUSTOM_COMMAND / GETIP_BACKEND_TEXT_VALUE / EXTERNAL_IP_SERVICE
-: "${GETIP_BACKEND_CUSTOM_COMMAND:=}"
-: "${GETIP_BACKEND_TEXT_VALUE:=}"
+# {{{ EXTERNAL_IP_SERVICE
+# EXTERNAL_IP_SERVICE:
+#   space separated list of curl-able endpoints returning the caller IP
+: "${EXTERNAL_IP_SERVICE:="https://api.ipify.org https://ifconfig.me https://ifconfig.co/ip https://icanhazip.com https://ipinfo.io/ip https://checkip.amazonaws.com"}"
+# }}}
+
+# {{{ GETIP_CURL_TIMEOUT
+# GETIP_CURL_TIMEOUT:
+#   timeout in seconds for curl/wget public queries
+#   default: 5
 : "${GETIP_CURL_TIMEOUT:=5}"
-: "${EXTERNAL_IP_SERVICE:="https://api.ipify.org https://ifconfig.me https://icanhazip.com https://checkip.amazonaws.com"}"
+# }}}
+
+# {{{ GETIP_CUSTOM_COMMAND
+# GETIP_CUSTOM_COMMAND:
+#   shell command invoked when `custom` backend is selected
+#   command output must be a bare IPv4/IPv6 string
+: "${GETIP_CUSTOM_COMMAND:=}"
+# }}}
+
+# {{{ GETIP_TEXT_VALUE
+# GETIP_TEXT_VALUE:
+#   literal IP address returned by the `text` backend
+: "${GETIP_TEXT_VALUE:=}"
 # }}}
 
 set -o pipefail
 
-command_exists() {
+__getip_last_iface=""
+
+# {{{ helpers
+__getip_command_exists() {
   command -v "$1" >/dev/null 2>&1
 }
 
-trim() {
-  local var="$1"
-  var="${var#"${var%%[![:space:]]*}"}"
-  var="${var%"${var##*[![:space:]]}"}"
-  printf '%s' "$var"
-}
-
-split_words() {
+__getip_trim() {
   local value="$1"
-  local -n __arr_ref="$2"
-  __arr_ref=()
-  local word
-  for word in $value; do
-    if [[ -n $word ]]; then
-      __arr_ref+=("$word")
-    fi
-  done
+  value="${value#"${value%%[![:space:]]*}"}"
+  value="${value%"${value##*[![:space:]]}"}"
+  printf '%s' "$value"
 }
 
-json_escape() {
+__getip_json_escape() {
   local str="$1"
   str=${str//\\/\\\\}
   str=${str//"/\\"}
   str=${str//$'\n'/\\n}
   str=${str//$'\r'/\\r}
   str=${str//$'\t'/\\t}
-  str=${str//$'\f'/\\f}
-  str=${str//$'\b'/\\b}
   printf '%s' "$str"
 }
 
-is_valid_ipv4() {
+__getip_normalize_version() {
+  local value=${1,,}
+  case "$value" in
+    ipv4|v4|4) printf 'ipv4' ;;
+    ipv6|v6|6) printf 'ipv6' ;;
+    *) return 1 ;;
+  esac
+}
+
+__getip_normalize_type() {
+  local value=${1,,}
+  case "$value" in
+    private|lan|local) printf 'private' ;;
+    public|wan|external) printf 'public' ;;
+    *) return 1 ;;
+  esac
+}
+
+__getip_normalize_output() {
+  local value=${1,,}
+  case "$value" in
+    ''|ip_only|ip|plain) printf 'ip_only' ;;
+    iface_ip|iface|interface) printf 'iface_ip' ;;
+    json) printf 'json' ;;
+    *) return 1 ;;
+  esac
+}
+
+__getip_split_words() {
+  local input="$1"
+  # shellcheck disable=SC2206
+  local words=($input)
+  printf '%s\n' "${words[@]}"
+}
+
+__getip_is_valid_ipv4() {
   local ip="$1"
   [[ $ip =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]] || return 1
   local IFS=.
-  read -r -a parts <<<"$ip"
-  local part
-  for part in "${parts[@]}"; do
-    ((part >= 0 && part <= 255)) || return 1
+  read -r -a octets <<<"$ip"
+  local octet
+  for octet in "${octets[@]}"; do
+    ((octet >= 0 && octet <= 255)) || return 1
   done
   return 0
 }
 
-HAS_PYTHON3=0
-if command_exists python3; then
-  HAS_PYTHON3=1
-fi
-
-is_valid_ipv6() {
+__getip_is_valid_ipv6() {
   local ip="$1"
-  if ((HAS_PYTHON3)); then
+  if __getip_command_exists python3; then
     python3 - "$ip" <<'PY'
-import sys
 import ipaddress
+import sys
 try:
     ipaddress.IPv6Address(sys.argv[1])
-except Exception:  # noqa: BLE001 - handled generically
+except Exception:  # noqa: BLE001
     sys.exit(1)
 PY
     return $?
   fi
-
   [[ $ip == *:* ]] || return 1
   [[ $ip =~ ^([0-9A-Fa-f]{0,4}:){2,7}[0-9A-Fa-f]{0,4}$ ]] && return 0
   [[ $ip =~ ^([0-9A-Fa-f]{1,4}:){1,7}:$ ]] && return 0
@@ -160,495 +178,584 @@ PY
   return 1
 }
 
-is_valid_ip() {
-  local ip="$1"
-  local version="$2"
-  case "$version" in
-    ipv4) is_valid_ipv4 "$ip" ;;
-    ipv6) is_valid_ipv6 "$ip" ;;
-    *) return 1 ;;
-  esac
-}
-
-is_loopback_ipv4() {
-  [[ $1 == 127.* ]]
-}
-
-is_loopback_ipv6() {
-  local ip=${1,,}
-  [[ $ip == ::1 || $ip == 0:0:0:0:0:0:0:1 ]]
-}
-
-is_loopback_ip() {
-  local ip="$1"
-  local version="$2"
-  case "$version" in
-    ipv4) is_loopback_ipv4 "$ip" ;;
-    ipv6) is_loopback_ipv6 "$ip" ;;
-    *) return 1 ;;
-  esac
-}
-
-is_link_local_ipv4() {
-  [[ $1 == 169.254.* ]]
-}
-
-is_link_local_ipv6() {
-  local ip=${1,,}
-  case "$ip" in
-    fe8*|fe9*|fea*|feb*) return 0 ;;
-  esac
-  return 1
-}
-
-is_link_local_ip() {
-  local ip="$1"
-  local version="$2"
-  case "$version" in
-    ipv4) is_link_local_ipv4 "$ip" ;;
-    ipv6) is_link_local_ipv6 "$ip" ;;
-    *) return 1 ;;
-  esac
-}
-
-is_private_ipv4() {
+__getip_usable_private_ipv4() {
   local ip="$1"
   case "$ip" in
-    10.*|192.168.*|172.16.*|172.17.*|172.18.*|172.19.*|172.20.*|172.21.*|172.22.*|172.23.*|172.24.*|172.25.*|172.26.*|172.27.*|172.28.*|172.29.*|172.30.*|172.31.*) return 0 ;;
-    169.254.*) return 0 ;;
-    127.*) return 0 ;;
-    198.18.*|198.19.*) return 0 ;;
+    ''|0.0.0.0|127.*|169.254.*) return 1 ;;
   esac
-  if [[ $ip == 100.* ]]; then
-    local second=${ip#100.}
-    second=${second%%.*}
-    if ((second >= 64 && second <= 127)); then
-      return 0
-    fi
-  fi
-  return 1
+  __getip_is_valid_ipv4 "$ip"
 }
 
-is_private_ipv6() {
-  local ip=${1,,}
-  case "$ip" in
-    fc*|fd*) return 0 ;;
-  esac
-  return 1
-}
-
-is_private_ip() {
+__getip_usable_private_ipv6() {
   local ip="$1"
-  local version="$2"
-  case "$version" in
-    ipv4) is_private_ipv4 "$ip" ;;
-    ipv6) is_private_ipv6 "$ip" ;;
-    *) return 1 ;;
+  [[ -n $ip ]] || return 1
+  if __getip_command_exists python3; then
+    python3 - "$ip" <<'PY'
+import ipaddress
+import sys
+try:
+    addr = ipaddress.IPv6Address(sys.argv[1])
+except ValueError:
+    sys.exit(1)
+if addr.is_loopback or addr.is_link_local or addr.is_unspecified:
+    sys.exit(1)
+sys.exit(0)
+PY
+    return $?
+  fi
+  local lower=${ip,,}
+  case "$lower" in
+    ::|::1|0:0:0:0:0:0:0:1|fe80:*) return 1 ;;
   esac
+  __getip_is_valid_ipv6 "$ip"
 }
 
-ip_is_allowed() {
+__getip_print_json() {
   local ip="$1"
-  local ip_type="$2"
+  local type="$2"
   local version="$3"
-  is_valid_ip "$ip" "$version" || return 1
-  if [[ $ip_type == public ]]; then
-    if is_loopback_ip "$ip" "$version"; then
-      return 1
-    fi
-    if is_private_ip "$ip" "$version"; then
-      return 1
-    fi
-    if is_link_local_ip "$ip" "$version"; then
-      return 1
-    fi
-  fi
-  return 0
-}
-
-iface_exists() {
-  local iface="$1"
-  [[ -n $iface ]] || return 1
-  if command_exists ip; then
-    ip link show "$iface" >/dev/null 2>&1 && return 0
-  fi
-  if command_exists ifconfig; then
-    ifconfig "$iface" >/dev/null 2>&1 && return 0
-  fi
-  [[ -d /sys/class/net/$iface ]]
-}
-
-backend_ip() {
-  local iface="$1"
-  local version="$2"
-  command_exists ip || return 1
-  local family_flag
-  if [[ $version == ipv4 ]]; then
-    family_flag=-4
-  else
-    family_flag=-6
-  fi
-  local output
-  output=$(ip -o "$family_flag" addr show dev "$iface" scope global 2>/dev/null)
-  if [[ -z $output ]]; then
-    output=$(ip -o "$family_flag" addr show dev "$iface" 2>/dev/null) || return 1
-  fi
-  local ip
-  ip=$(printf '%s\n' "$output" | awk '{print $4}' | head -n1)
-  ip=${ip%%/*}
-  ip=${ip%%%*}
-  [[ -n $ip ]] || return 1
-  printf '%s\n' "$ip"
-}
-
-backend_ifconfig() {
-  local iface="$1"
-  local version="$2"
-  command_exists ifconfig || return 1
-  local output
-  output=$(ifconfig "$iface" 2>/dev/null) || return 1
-  local ip=""
-  if [[ $version == ipv4 ]]; then
-    ip=$(printf '%s\n' "$output" | awk '/inet / {print $2} /inet addr:/ {sub("addr:", "", $2); print $2}' | head -n1)
-  else
-    ip=$(printf '%s\n' "$output" | awk '/inet6 / {print $2} /inet6 addr:/ {sub("addr:", "", $3); print $3}' | head -n1)
-  fi
-  ip=${ip%%/*}
-  ip=${ip%%%*}
-  [[ -n $ip ]] || return 1
-  printf '%s\n' "$ip"
-}
-
-backend_nmcli() {
-  local iface="$1"
-  local version="$2"
-  command_exists nmcli || return 1
-  local field
-  if [[ $version == ipv4 ]]; then
-    field="IP4.ADDRESS"
-  else
-    field="IP6.ADDRESS"
-  fi
-  local output
-  output=$(nmcli -t -f "$field" dev show "$iface" 2>/dev/null) || return 1
-  local ip
-  ip=$(printf '%s\n' "$output" | awk -F':' 'NF > 1 {print $2}' | head -n1)
-  ip=${ip%%/*}
-  ip=${ip%%%*}
-  [[ -n $ip ]] || return 1
-  printf '%s\n' "$ip"
-}
-
-backend_proc() {
-  local iface="$1"
-  local version="$2"
-  if [[ $version == ipv4 ]]; then
-    [[ -r /proc/net/fib_trie ]] || return 1
-    local ip
-    ip=$(awk -v iface="$iface" '
-      $1 == "32" && $2 == "host" {candidate=""}
-      $1 == "local" {candidate=$2}
-      $1 == "dev" && $2 == iface && candidate != "" {print candidate; exit}
-    ' /proc/net/fib_trie)
-    [[ -n $ip ]] || return 1
-    printf '%s\n' "$ip"
-    return 0
-  else
-    [[ -r /proc/net/if_inet6 ]] || return 1
-    local ip
-    ip=$(awk -v iface="$iface" '
-      tolower($NF) == tolower(iface) {
-        ip=""
-        for (i = 1; i <= length($1); i += 4) {
-          segment = substr($1, i, 4)
-          ip = ip segment ":"
-        }
-        sub(/:$/, "", ip)
-        print ip
-        exit
-      }
-    ' /proc/net/if_inet6)
-    [[ -n $ip ]] || return 1
-    printf '%s\n' "$ip"
-    return 0
-  fi
-}
-
-backend_hostname() {
-  local version="$1"
-  command_exists hostname || return 1
-  local output
-  output=$(hostname -I 2>/dev/null) || return 1
-  local token
-  for token in $output; do
-    token=$(trim "$token")
-    token=${token%%/*}
-    token=${token%%%*}
-    if is_valid_ip "$token" "$version"; then
-      if [[ $version == ipv4 ]]; then
-        [[ $token == 127.* ]] && continue
-      else
-        local lower=${token,,}
-        [[ $lower == ::1 || $lower == 0:0:0:0:0:0:0:1 ]] && continue
-      fi
-      printf '%s\n' "$token"
-      return 0
-    fi
-  done
-  return 1
-}
-
-BACKEND_LAST_SOURCE=""
-
-backend_curl() {
-  local version="$1"
-  command_exists curl || return 1
-  local -a services
-  split_words "$EXTERNAL_IP_SERVICE" services
-  if ((${#services[@]} == 0)); then
-    services=("https://api.ipify.org")
-  fi
-  local curl_flag="--ipv4"
-  if [[ $version == ipv6 ]]; then
-    curl_flag="--ipv6"
-  fi
-  local service response
-  for service in "${services[@]}"; do
-    [[ -n $service ]] || continue
-    response=$(curl -fsS --max-time "$GETIP_CURL_TIMEOUT" "$curl_flag" "$service" 2>/dev/null) || continue
-    response=${response//$'\r'/}
-    response=$(trim "$response")
-    response=${response%%$'\n'*}
-    if is_valid_ip "$response" "$version"; then
-      BACKEND_LAST_SOURCE="curl:${service}"
-      printf '%s\n' "$response"
-      return 0
-    fi
-  done
-  return 1
-}
-
-backend_custom() {
-  local version="$1"
-  [[ -n $GETIP_BACKEND_CUSTOM_COMMAND ]] || return 1
-  local output
-  output=$(GETIP_IP_VERSION="$version" GETIP_IP_TYPE="$GETIP_IP_TYPE" bash -c "$GETIP_BACKEND_CUSTOM_COMMAND" 2>/dev/null) || return 1
-  output=$(trim "$output")
-  output=${output%%$'\n'*}
-  if is_valid_ip "$output" "$version"; then
-    BACKEND_LAST_SOURCE="custom"
-    printf '%s\n' "$output"
-    return 0
-  fi
-  return 1
-}
-
-backend_text() {
-  local version="$1"
-  [[ -n $GETIP_BACKEND_TEXT_VALUE ]] || return 1
-  local ip
-  ip=$(trim "$GETIP_BACKEND_TEXT_VALUE")
-  ip=${ip%%$'\n'*}
-  if is_valid_ip "$ip" "$version"; then
-    BACKEND_LAST_SOURCE="text"
-    printf '%s\n' "$ip"
-    return 0
-  fi
-  return 1
-}
-
-backend_external_command() {
-  local backend="$1"
-  local iface="$2"
-  local version="$3"
-  command_exists "$backend" || return 1
-  local output
-  output=$(GETIP_IFACE="$iface" GETIP_IP_VERSION="$version" GETIP_IP_TYPE="$GETIP_IP_TYPE" "$backend" 2>/dev/null) || return 1
-  output=$(trim "$output")
-  output=${output%%$'\n'*}
-  if is_valid_ip "$output" "$version"; then
-    BACKEND_LAST_SOURCE="$backend"
-    printf '%s\n' "$output"
-    return 0
-  fi
-  return 1
-}
-
-invoke_backend() {
-  local backend="$1"
-  local iface="$2"
-  local version="$3"
-  local backend_lc=${backend,,}
-  BACKEND_LAST_SOURCE="$backend"
-  case "$backend_lc" in
-    ip) backend_ip "$iface" "$version" ;;
-    ifconfig) backend_ifconfig "$iface" "$version" ;;
-    nmcli) backend_nmcli "$iface" "$version" ;;
-    proc|/proc|procfs) backend_proc "$iface" "$version" ;;
-    hostname) backend_hostname "$version" ;;
-    curl) backend_curl "$version" ;;
-    custom) backend_custom "$version" ;;
-    text) backend_text "$version" ;;
-    *) backend_external_command "$backend" "$iface" "$version" ;;
-  esac
-}
-
-backend_is_global() {
-  local backend_lc="$1"
-  case "$backend_lc" in
-    curl|hostname|custom|text) return 0 ;;
-  esac
-  return 1
-}
-
-get_ip_for_type() {
-  local ip_type="$1"
-  local version="$2"
-  local -a ifaces backends
-  if [[ $ip_type == public ]]; then
-    split_words "$GETIP_IFACE_WAN_ORDER" ifaces
-    split_words "$GETIP_BACKEND_WAN_ORDER" backends
-  else
-    split_words "$GETIP_IFACE_LAN_ORDER" ifaces
-    split_words "$GETIP_BACKEND_LAN_ORDER" backends
-  fi
-
-  if ((${#backends[@]} == 0)); then
-    backends=(ip ifconfig hostname)
-  fi
-
-  local backend backend_lc iface ip source
-  for backend in "${backends[@]}"; do
-    backend_lc=${backend,,}
-    if backend_is_global "$backend_lc"; then
-      ip=$(invoke_backend "$backend" "" "$version") || continue
-      source=${BACKEND_LAST_SOURCE:-$backend}
-      if ip_is_allowed "$ip" "$ip_type" "$version"; then
-        printf '%s|%s|%s\n' "$ip" "" "$source"
-        return 0
-      fi
-      continue
-    fi
-
-    for iface in "${ifaces[@]}"; do
-      [[ -n $iface ]] || continue
-      if ! iface_exists "$iface"; then
-        continue
-      fi
-      ip=$(invoke_backend "$backend" "$iface" "$version") || continue
-      source=${BACKEND_LAST_SOURCE:-$backend}
-      if ip_is_allowed "$ip" "$ip_type" "$version"; then
-        printf '%s|%s|%s\n' "$ip" "$iface" "$source"
-        return 0
-      fi
-    done
-  done
-  return 1
-}
-
-print_json() {
-  local ip="$1"
-  local iface="$2"
-  local backend="$3"
-  local ip_type="$4"
-  local version="$5"
+  local iface="$4"
   printf '{\n'
-  printf '  "ip": "%s",\n' "$(json_escape "$ip")"
+  printf '  "ip": "%s",\n' "$(__getip_json_escape "$ip")"
+  printf '  "type": "%s",\n' "$(__getip_json_escape "$type")"
+  printf '  "version": "%s",\n' "$(__getip_json_escape "$version")"
   if [[ -n $iface ]]; then
-    printf '  "interface": "%s",\n' "$(json_escape "$iface")"
+    printf '  "interface": "%s"\n' "$(__getip_json_escape "$iface")"
   else
-    printf '  "interface": null,\n'
+    printf '  "interface": null\n'
   fi
-  if [[ -n $backend ]]; then
-    printf '  "backend": "%s",\n' "$(json_escape "$backend")"
-  else
-    printf '  "backend": null,\n'
-  fi
-  printf '  "type": "%s",\n' "$(json_escape "$ip_type")"
-  printf '  "version": "%s"\n' "$(json_escape "$version")"
   printf '}\n'
 }
+# }}}
 
-print_output() {
-  local ip="$1"
-  local iface="$2"
-  local backend="$3"
-  case "${GETIP_OUTPUT,,}" in
-    ip_only|ip)
+# {{{ interface helpers
+__getip_pick_interface_address() {
+  local _version="$1"
+  local iface_list="$2"
+  local -n ref_addresses=$3
+  local entry iface_name candidate ip
+  if [[ -n $iface_list ]]; then
+    while IFS= read -r candidate; do
+      [[ -n $candidate ]] || continue
+      for entry in "${ref_addresses[@]}"; do
+        iface_name=${entry%%|*}
+        ip=${entry#*|}
+        if [[ $iface_name == "$candidate" ]]; then
+          __getip_last_iface="$iface_name"
+          printf '%s\n' "$ip"
+          return 0
+        fi
+      done
+    done < <(__getip_split_words "$iface_list")
+  fi
+  if ((${#ref_addresses[@]} > 0)); then
+    entry=${ref_addresses[0]}
+    iface_name=${entry%%|*}
+    ip=${entry#*|}
+    __getip_last_iface="$iface_name"
+    printf '%s\n' "$ip"
+    return 0
+  fi
+  return 1
+}
+# }}}
+
+# {{{ backend collectors
+__getip_backend_ip() {
+  local version="$1"
+  local iface_list="$2"
+  __getip_command_exists ip || return 1
+  local flag=-4
+  [[ $version == ipv6 ]] && flag=-6
+  local line iface address
+  local -a addresses=()
+  while IFS=' ' read -r _ iface _ address _rest; do
+    iface=${iface%:}
+    address=${address%%/*}
+    if [[ $version == ipv4 ]]; then
+      __getip_usable_private_ipv4 "$address" || continue
+    else
+      __getip_usable_private_ipv6 "$address" || continue
+    fi
+    addresses+=("$iface|$address")
+  done < <(ip -o "$flag" addr show scope global 2>/dev/null)
+  ((${#addresses[@]} > 0)) || return 1
+  __getip_pick_interface_address "$version" "$iface_list" addresses
+}
+
+__getip_backend_ifconfig() {
+  local version="$1"
+  local iface_list="$2"
+  __getip_command_exists ifconfig || return 1
+  local output
+  output=$(ifconfig 2>/dev/null) || return 1
+  local line iface="" ip
+  local -a addresses=()
+  while IFS= read -r line; do
+    if [[ $line =~ ^([[:alnum:]_.:-]+):?[[:space:]] ]]; then
+      iface=${BASH_REMATCH[1]%:}
+      continue
+    fi
+    if [[ $version == ipv4 && $line =~ inet[[:space:]]([0-9.]+) ]]; then
+      ip=${BASH_REMATCH[1]}
+      __getip_usable_private_ipv4 "$ip" || continue
+      addresses+=("$iface|$ip")
+    elif [[ $version == ipv6 && $line =~ inet6[[:space:]]([0-9a-fA-F:]+) ]]; then
+      ip=${BASH_REMATCH[1]}
+      __getip_usable_private_ipv6 "$ip" || continue
+      addresses+=("$iface|$ip")
+    fi
+  done <<<"$output"
+  ((${#addresses[@]} > 0)) || return 1
+  __getip_pick_interface_address "$version" "$iface_list" addresses
+}
+
+__getip_backend_hostname() {
+  local version="$1"
+  __getip_command_exists hostname || return 1
+  local tokens token
+  tokens=$(hostname -I 2>/dev/null) || return 1
+  for token in $tokens; do
+    token=${token%%/*}
+    if [[ $version == ipv4 ]]; then
+      if ! __getip_usable_private_ipv4 "$token"; then
+        continue
+      fi
+    else
+      if ! __getip_usable_private_ipv6 "$token"; then
+        continue
+      fi
+    fi
+    __getip_last_iface=""
+    printf '%s\n' "$token"
+    return 0
+  done
+  return 1
+}
+
+__getip_backend_nmcli() {
+  local version="$1"
+  local iface_list="$2"
+  __getip_command_exists nmcli || return 1
+  local -a addresses=()
+  local key value iface=""
+  while IFS=: read -r key value; do
+    case "$key" in
+      DEVICE)
+        iface=$value
+        ;;
+      IP4.ADDRESS*)
+        [[ $version == ipv4 ]] || continue
+        value=${value%%/*}
+        [[ -n $iface ]] || continue
+        __getip_usable_private_ipv4 "$value" || continue
+        addresses+=("$iface|$value")
+        ;;
+      IP6.ADDRESS*)
+        [[ $version == ipv6 ]] || continue
+        value=${value%%/*}
+        [[ -n $iface ]] || continue
+        __getip_usable_private_ipv6 "$value" || continue
+        addresses+=("$iface|$value")
+        ;;
+    esac
+  done < <(nmcli -t -f DEVICE,IP4.ADDRESS,IP6.ADDRESS device show 2>/dev/null)
+  ((${#addresses[@]} > 0)) || return 1
+  __getip_pick_interface_address "$version" "$iface_list" addresses
+}
+
+__getip_backend_proc_ipv4() {
+  local iface_list="$1"
+  [[ -r /proc/net/fib_trie ]] || return 1
+  local line ip iface
+  local current_iface=""
+  local -a addresses=()
+  while IFS= read -r line; do
+    if [[ $line == *"32 host"* ]]; then
+      read -r line || break
+      if [[ $line == *"local"* ]]; then
+        read -r line || break
+        ip=$(__getip_trim "$line")
+        if __getip_usable_private_ipv4 "$ip"; then
+          addresses+=("$current_iface|$ip")
+        fi
+      fi
+    elif [[ $line == *"Primary"* ]]; then
+      iface=$(__getip_trim "${line##*--}")
+      current_iface=${iface%%:*}
+    fi
+  done < /proc/net/fib_trie
+  ((${#addresses[@]} > 0)) || return 1
+  __getip_pick_interface_address ipv4 "$iface_list" addresses
+}
+
+__getip_backend_proc_ipv6() {
+  local iface_list="$1"
+  [[ -r /proc/net/if_inet6 ]] || return 1
+  local iface raw ip
+  local -a addresses=()
+  while read -r raw iface _; do
+    ip=${raw:0:4}:${raw:4:4}:${raw:8:4}:${raw:12:4}:${raw:16:4}:${raw:20:4}:${raw:24:4}:${raw:28:4}
+    ip=${ip//:0000/:0}
+    ip=${ip//0000/0}
+    __getip_usable_private_ipv6 "$ip" || continue
+    addresses+=("$iface|$ip")
+  done < /proc/net/if_inet6
+  ((${#addresses[@]} > 0)) || return 1
+  __getip_pick_interface_address ipv6 "$iface_list" addresses
+}
+
+__getip_backend_proc() {
+  local version="$1"
+  local iface_list="$2"
+  if [[ $version == ipv4 ]]; then
+    __getip_backend_proc_ipv4 "$iface_list"
+  else
+    __getip_backend_proc_ipv6 "$iface_list"
+  fi
+}
+
+__getip_backend_curl() {
+  local version="$1"
+  local services_string="$2"
+  local timeout="${3:-$GETIP_CURL_TIMEOUT}"
+  local -a services=()
+  local service
+  for service in $services_string; do
+    [[ -n $service ]] && services+=("$service")
+  done
+  if ((${#services[@]} == 0)); then
+    services=(
+      "https://api.ipify.org"
+      "https://ifconfig.me"
+      "https://icanhazip.com"
+      "https://checkip.amazonaws.com"
+    )
+  fi
+  local curl_flag="--ipv4"
+  [[ $version == ipv6 ]] && curl_flag="--ipv6"
+  local response
+  for service in "${services[@]}"; do
+    if __getip_command_exists curl; then
+      response=$(curl -fsSL --max-time "$timeout" "$curl_flag" "$service" 2>/dev/null) || response=""
+    elif __getip_command_exists wget; then
+      local -a wget_flags=(-q -T "$timeout" -O -)
+      [[ $version == ipv6 ]] && wget_flags+=(-6) || wget_flags+=(-4)
+      response=$(wget "${wget_flags[@]}" "$service" 2>/dev/null) || response=""
+    else
+      return 1
+    fi
+    response=${response//$'\r'/}
+    response=$(__getip_trim "$response")
+    response=${response%%$'\n'*}
+    if [[ $version == ipv4 ]]; then
+      __getip_is_valid_ipv4 "$response" || continue
+    else
+      __getip_is_valid_ipv6 "$response" || continue
+    fi
+    __getip_last_iface=""
+    printf '%s\n' "$response"
+    return 0
+  done
+  return 1
+}
+
+__getip_backend_custom() {
+  local version="$1"
+  local command_string="$2"
+  [[ -n $command_string ]] || return 1
+  local response
+  response=$(eval "$command_string" 2>/dev/null) || response=""
+  response=$(__getip_trim "$response")
+  response=${response%%$'\n'*}
+  if [[ $version == ipv4 ]]; then
+    __getip_is_valid_ipv4 "$response" || return 1
+  else
+    __getip_is_valid_ipv6 "$response" || return 1
+  fi
+  __getip_last_iface=""
+  printf '%s\n' "$response"
+}
+
+__getip_backend_text() {
+  local version="$1"
+  local value="$2"
+  [[ -n $value ]] || return 1
+  if [[ $version == ipv4 ]]; then
+    __getip_is_valid_ipv4 "$value" || return 1
+  else
+    __getip_is_valid_ipv6 "$value" || return 1
+  fi
+  __getip_last_iface=""
+  printf '%s\n' "$value"
+}
+# }}}
+
+# {{{ core lookup
+__getip_lookup_private_ip() {
+  local version="$1"
+  local iface_list="$2"
+  local backends_string="$3"
+  local services_string="$4"
+  local timeout_value="${5:-$GETIP_CURL_TIMEOUT}"
+  local -a backends=()
+  local backend
+  for backend in $backends_string; do
+    [[ -n $backend ]] && backends+=("$backend")
+  done
+  for backend in "${backends[@]}"; do
+    case "$backend" in
+      ip)
+        __getip_backend_ip "$version" "$iface_list" && return 0
+        ;;
+      ifconfig)
+        __getip_backend_ifconfig "$version" "$iface_list" && return 0
+        ;;
+      hostname)
+        __getip_backend_hostname "$version" && return 0
+        ;;
+      nmcli)
+        __getip_backend_nmcli "$version" "$iface_list" && return 0
+        ;;
+      proc)
+        __getip_backend_proc "$version" "$iface_list" && return 0
+        ;;
+      curl)
+        __getip_backend_curl "$version" "${services_string:-$EXTERNAL_IP_SERVICE}" "$timeout_value" && return 0
+        ;;
+      custom)
+        __getip_backend_custom "$version" "${GETIP_CUSTOM_COMMAND:-}" && return 0
+        ;;
+      text)
+        __getip_backend_text "$version" "${GETIP_TEXT_VALUE:-}" && return 0
+        ;;
+    esac
+  done
+  return 1
+}
+
+__getip_lookup_public_ip() {
+  local version="$1"
+  local iface_list="$2"
+  local backends_string="$3"
+  local services="$4"
+  local timeout="${5:-$GETIP_CURL_TIMEOUT}"
+  local -a backends=()
+  local backend
+  for backend in $backends_string; do
+    [[ -n $backend ]] && backends+=("$backend")
+  done
+  for backend in "${backends[@]}"; do
+    case "$backend" in
+      ip|ifconfig|hostname|nmcli|proc)
+        # Attempt interface based discovery first for completeness.
+        if __getip_lookup_private_ip "$version" "$iface_list" "$backend" "$services" "$timeout"; then
+          return 0
+        fi
+        ;;
+      curl)
+        __getip_backend_curl "$version" "$services" "$timeout" && return 0
+        ;;
+      custom)
+        __getip_backend_custom "$version" "${GETIP_CUSTOM_COMMAND:-}" && return 0
+        ;;
+      text)
+        __getip_backend_text "$version" "${GETIP_TEXT_VALUE:-}" && return 0
+        ;;
+    esac
+  done
+  return 1
+}
+# }}}
+
+# {{{ usage
+__getip_usage() {
+  cat <<'USAGE'
+Usage: getip [options]
+
+Options:
+  -4, --ipv4            Prefer IPv4 addresses (default)
+  -6, --ipv6            Prefer IPv6 addresses
+  -t, --type TYPE       TYPE is "private" (default) or "public"
+  -i, --interface IFACE Restrict to network interface IFACE
+  -b, --backend LIST    Space separated backend order override
+  -s, --service LIST    Space separated list of public IP services
+  -T, --timeout SEC     Timeout in seconds for public lookups (default: 5)
+  -o, --output FORMAT   Output format: ip_only, iface_ip, json
+      --json            Shortcut for "--output json"
+  -q, --quiet           Suppress error messages
+  -h, --help            Show this help and exit
+USAGE
+}
+# }}}
+
+# {{{ main function
+getip() {
+  local version="$GETIP_IP_VERSION"
+  local type="$GETIP_IP_TYPE"
+  local output="$GETIP_OUTPUT"
+  local iface_override=""
+  local backend_override=""
+  local services_override="$EXTERNAL_IP_SERVICE"
+  local timeout="$GETIP_CURL_TIMEOUT"
+  local quiet=0
+
+  while (($#)); do
+    case "$1" in
+      -4|--ipv4)
+        version=ipv4
+        ;;
+      -6|--ipv6)
+        version=ipv6
+        ;;
+      -t|--type)
+        if [[ -z ${2:-} ]]; then
+          ((quiet)) || printf 'getip: missing value for --type\n' >&2
+          return 1
+        fi
+        type=$2
+        shift
+        ;;
+      -i|--interface)
+        if [[ -z ${2:-} ]]; then
+          ((quiet)) || printf 'getip: missing value for --interface\n' >&2
+          return 1
+        fi
+        iface_override=$2
+        shift
+        ;;
+      -b|--backend)
+        if [[ -z ${2:-} ]]; then
+          ((quiet)) || printf 'getip: missing value for --backend\n' >&2
+          return 1
+        fi
+        backend_override=$2
+        shift
+        ;;
+      -s|--service)
+        if [[ -z ${2:-} ]]; then
+          ((quiet)) || printf 'getip: missing value for --service\n' >&2
+          return 1
+        fi
+        services_override=$2
+        shift
+        ;;
+      -T|--timeout)
+        if [[ -z ${2:-} ]]; then
+          ((quiet)) || printf 'getip: missing value for --timeout\n' >&2
+          return 1
+        fi
+        timeout=$2
+        shift
+        ;;
+      -o|--output)
+        if [[ -z ${2:-} ]]; then
+          ((quiet)) || printf 'getip: missing value for --output\n' >&2
+          return 1
+        fi
+        output=$2
+        shift
+        ;;
+      --json)
+        output=json
+        ;;
+      -q|--quiet)
+        quiet=1
+        ;;
+      -h|--help)
+        __getip_usage
+        return 0
+        ;;
+      --)
+        shift
+        break
+        ;;
+      -*)
+        ((quiet)) || printf 'getip: unknown option %s\n' "$1" >&2
+        return 1
+        ;;
+      *)
+        ((quiet)) || printf 'getip: unexpected argument %s\n' "$1" >&2
+        return 1
+        ;;
+    esac
+    shift
+  done
+
+  if (($#)); then
+    ((quiet)) || printf 'getip: unexpected argument %s\n' "$1" >&2
+    return 1
+  fi
+
+  version=$(__getip_normalize_version "$version") || {
+    ((quiet)) || printf 'getip: unsupported IP version "%s"\n' "$version" >&2
+    return 1
+  }
+  type=$(__getip_normalize_type "$type") || {
+    ((quiet)) || printf 'getip: unsupported IP type "%s"\n' "$type" >&2
+    return 1
+  }
+  output=$(__getip_normalize_output "$output") || {
+    ((quiet)) || printf 'getip: unsupported output format "%s"\n' "$output" >&2
+    return 1
+  }
+
+  local iface_list=""
+  if [[ -n $iface_override ]]; then
+    iface_list="$iface_override"
+  else
+    if [[ $type == private ]]; then
+      iface_list="$GETIP_IFACE_LAN_ORDER"
+    else
+      iface_list="$GETIP_IFACE_WAN_ORDER"
+    fi
+  fi
+
+  local backend_list=""
+  if [[ -n $backend_override ]]; then
+    backend_list="$backend_override"
+  else
+    if [[ $type == private ]]; then
+      backend_list="$GETIP_BACKEND_LAN_ORDER"
+    else
+      backend_list="$GETIP_BACKEND_WAN_ORDER"
+    fi
+  fi
+
+  local services="$services_override"
+  local ip=""
+  __getip_last_iface=""
+
+  if [[ $type == private ]]; then
+    ip=$(__getip_lookup_private_ip "$version" "$iface_list" "$backend_list" "$services" "$timeout") || {
+      ((quiet)) || printf 'getip: unable to determine private %s address\n' "$version" >&2
+      return 1
+    }
+  else
+    ip=$(__getip_lookup_public_ip "$version" "$iface_list" "$backend_list" "$services" "$timeout") || {
+      ((quiet)) || printf 'getip: unable to determine public %s address\n' "$version" >&2
+      return 1
+    }
+  fi
+
+  case "$output" in
+    ip_only)
       printf '%s\n' "$ip"
       ;;
-    iface_ip|iface|interface)
-      if [[ -n $iface ]]; then
-        printf '%s %s\n' "$iface" "$ip"
+    iface_ip)
+      if [[ -n $__getip_last_iface ]]; then
+        printf '%s %s\n' "$__getip_last_iface" "$ip"
       else
         printf '%s\n' "$ip"
       fi
       ;;
     json)
-      print_json "$ip" "$iface" "$backend" "$GETIP_IP_TYPE" "$GETIP_IP_VERSION"
-      ;;
-    *)
-      printf '%s\n' "$ip"
+      __getip_print_json "$ip" "$type" "$version" "$__getip_last_iface"
       ;;
   esac
 }
+# }}}
 
-normalise_ip_version() {
-  local version=${1,,}
-  case "$version" in
-    ipv4|v4|4) printf 'ipv4' ;;
-    ipv6|v6|6) printf 'ipv6' ;;
-    *) return 1 ;;
-  esac
-}
-
-normalise_ip_type() {
-  local type=${1,,}
-  case "$type" in
-    private|lan|local) printf 'private' ;;
-    public|wan|external) printf 'public' ;;
-    *) return 1 ;;
-  esac
-}
-
-normalise_output_mode() {
-  local mode=${1,,}
-  case "$mode" in
-    ip_only|ip) printf 'ip_only' ;;
-    iface_ip|iface|interface) printf 'iface_ip' ;;
-    json) printf 'json' ;;
-    *) return 1 ;;
-  esac
-}
-
-main() {
-  local normalised
-  normalised=$(normalise_ip_version "$GETIP_IP_VERSION") || {
-    printf 'get_ip: unsupported GETIP_IP_VERSION=%s\n' "$GETIP_IP_VERSION" >&2
-    return 1
-  }
-  GETIP_IP_VERSION=$normalised
-
-  normalised=$(normalise_ip_type "$GETIP_IP_TYPE") || {
-    printf 'get_ip: unsupported GETIP_IP_TYPE=%s\n' "$GETIP_IP_TYPE" >&2
-    return 1
-  }
-  GETIP_IP_TYPE=$normalised
-
-  normalised=$(normalise_output_mode "$GETIP_OUTPUT") || {
-    printf 'get_ip: unsupported GETIP_OUTPUT=%s\n' "$GETIP_OUTPUT" >&2
-    return 1
-  }
-  GETIP_OUTPUT=$normalised
-
-  local result ip iface backend
-  result=$(get_ip_for_type "$GETIP_IP_TYPE" "$GETIP_IP_VERSION") || {
-    printf 'get_ip: unable to determine %s %s address\n' "$GETIP_IP_TYPE" "$GETIP_IP_VERSION" >&2
-    return 1
-  }
-
-  IFS='|' read -r ip iface backend <<<"$result"
-  print_output "$ip" "$iface" "$backend"
-}
-
-main "$@"
+if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
+  getip "$@"
+fi

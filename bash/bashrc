@@ -269,6 +269,7 @@ if command -v git >/dev/null 2>&1; then
     alias gd='git diff'
     alias gdc='git diff --cached'
     alias gca='git commit -a'
+    alias gcam='git commit -a -m'
     alias gamend='git commit --amend'
     alias gundo='git reset --soft HEAD^'
     alias gcln='git clone --no-checkout'

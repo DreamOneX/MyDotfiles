@@ -17,13 +17,28 @@ source $SCRIPT_DIR/func/skp.sh
 
 # }}}
 
+# {{{ CONFIGURATION
+
+# {{{ TEST_WORKPLACE_ROOT
+# TEST_WORKPLACE_ROOT is used by function tw to set LOCAL var
+: "${TEST_WORKSPACE_ROOT:=$HOME/test_workspace}"
+# }}}
+
+# }}}
+
 # {{{ SHELL OPTIONS
 
-# TODO: justify the existence of these options
+# TODO(maybe solved): justify the existence of these options
+# TODO: fix the not accurate warning messages
 
 enable_shopt() {
     local opt="$1"
     shopt -s "$opt" 2>/dev/null || echo -e "${YELLOW}${BOLD}[WARN] shell option '$opt' not supported.${NC}"
+}
+
+disable_shopt() {
+    local opt="$1"
+    shopt -u "$opt" 2>/dev/null || echo -e "${YELLOW}${BOLD}[WARN] shell option '$opt' not supported.${NC}"
 }
 
 # {{{ file / path
@@ -66,17 +81,64 @@ enable_shopt failglob # fail if a glob doesn't match
 
 export GPG_TTY=$(tty)
 
+# {{{ EDITOR&VISUAL
+
+# {{{ EDITOR
+if command -v nvim >/dev/null 2>&1; then
+    export EDITOR='nvim'
+elif command -v vim >/dev/null 2>&1; then
+    echo -e "${YELLOW}${BOLD}[WARN] nvim not found, but vim founded. EDITOR set to it${NC}"
+    export EDITOR='vim'
+elif command -v emacs>/dev/null 2>&1; then
+    echo -e "${YELLOW}${BOLD}[WARN] nvim/vim not found, but emacs founded. EDITOR set to it${NC}"
+    export EDITOR='emacs'
+elif command -v micro >/dev/null 2>&1; then
+    echo -e "${YELLOW}${BOLD}[WARN] nvim/vim/emacs not found, but micro founded. EDITOR set to it${NC}"
+    export EDITOR='micro'
+elif command -v nano >/dev/null 2>&1; then
+    echo -e "${YELLOW}${BOLD}[WARN] nvim/vim/emacs/micro not found, but nano founded. EDITOR set to it${NC}"
+    export EDITOR='nano'
+elif command -v vi >/dev/null 2>&1; then
+    echo -e "${YELLOW}${BOLD}[WARN] nvim/vim/emacs/micro/nano not found, but vi founded. EDITOR set to it${NC}"
+    export EDITOR='vi'
+else
+    echo -e "${YELLOW}${BOLD}[WARN] nvim/vim/emacs/micro/nano/vi not found. EDITOR not set.${NC}"
+fi
+# }}}
+
+# {{{ VISUAL
+if [ -n "$DISPLAY" ] || [ -n "$WAYLAND_DISPLAY" ]; then
+    if command -v neovide >/dev/null 2>&1; then
+        export VISUAL='neovide --multigrid'
+    elif command -v code >/dev/null 2>&1; then
+        echo -e "${YELLOW}${BOLD}[WARN] neovide not found, but code founded. VISUAL set to it${NC}"
+        export VISUAL='code --wait'
+    else
+        echo -e "${YELLOW}${BOLD}[WARN] neovide/code not found. VISUAL falling back to EDITOR${NC}"
+        export VISUAL="$EDITOR"
+    fi
+else
+    echo -e "${YELLOW}${BOLD}[WARN] DISPLAY/WAYLAND_DISPLAY not set. VISUAL falling back to EDITOR, which is ${UNDERLINE}${EDITOR}${NC}"
+    export VISUAL="$EDITOR"
+fi
+# }}}
+
+# }}}
+
 # {{{ HISTORY
 export HISTSIZE=10000
 export HISTFILESIZE=1000000
 export HISTFILE=~/.bash_history
 export HISTCONTROL=ignoreboth
 export HISTTIMEFORMAT='%F %T '
+# TODO: zoxide hook causes some error
+export PROMPT_COMMAND="history -a; history -n"
 # }}}
 
 # {{{ PAGER
-# export PAGER=
-# export MANPAGER=manbat
+export PAGER='less -m -RFQ'
+# TODO: export MANPAGER=manbat
+export MANPAGER='less -m -RFQ'
 # }}}
 
 # {{{ LESS BEAUTIFY
@@ -258,26 +320,34 @@ if command -v git >/dev/null 2>&1; then
     alias gcl='git clone'
     alias gst='git status'
     alias gco='git checkout'
-    alias gcm='git commit -m'
-    alias gaa='git add .'
-    alias gp='git push'
-    alias gpl='git pull'
-    alias gf='git fetch'
-    alias gbr='git branch'
-    alias gl='git log --oneline --graph --decorate --all'
-    alias gss='git status -s'
-    alias gd='git diff'
-    alias gdc='git diff --cached'
+    alias gcb='git checkout -b'
     alias gca='git commit -a'
     alias gcam='git commit -a -m'
     alias gamend='git commit --amend'
+    alias ga='git add'
+    alias gaa='git add .'
+    alias gp='git push'
+    alias gl='git pull'
+    alias gf='git fetch'
+    alias gb='git branch'
+    alias gbv='git branch -vv'
+    alias glo='git log --oneline --graph --decorate --all'
+    alias gss='git status -s'
+    alias gd='git diff'
+    alias gdc='git diff --cached'
     alias gundo='git reset --soft HEAD^'
+    alias grhh='git reset --hard'
+    alias grst='git reset --soft'
     alias gcln='git clone --no-checkout'
     alias gpr='git pull --rebase'
     alias gcp='git cherry-pick'
     alias gsta='git stash'
     alias gstp='git stash pop'
     alias gsts='git stash show --text'
+    alias grb='git rebase'
+    alias grbc='git rebase --continue'
+    alias grba='git rebase --abort'
+    alias grbs='git rebase --skip'
 else
     echo -e "${YELLOW}${BOLD}[WARN] git not found. Git aliases unavailable.${NC}"
 fi

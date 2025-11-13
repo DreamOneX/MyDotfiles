@@ -2,7 +2,6 @@
 # skp.sh — cross-distro package picker+installer with fzf/skim (or a custom picker)
 # Built-ins: termux-apt, termux-pacman, apt, pacman, yay, paru, zypper, dnf, yum, eix, emerge, brew, nix, snap, opkg, npm, pip
 # Custom PMs: --pm NAME reads ${NAME}_list_cmd / ${NAME}_info_cmd / ${NAME}_install_cmd (hyphens -> underscores)
-set -u
 
 # --- Configurable options (override via env) ---
 # TODO: this section is currently non-functional

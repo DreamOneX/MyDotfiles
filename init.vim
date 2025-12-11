@@ -6,7 +6,6 @@ echo "(≧▽≦) NeoVim is starting"
 set backspace=indent,eol,start
 set encoding=utf-8
 set fileencodings=utf-8,gbk,gb2312,cp936
-set shell=/usr/bin/zsh  " 设置shell
 set number              " 显示行号
 set mouse=a             " 开启鼠标
 set laststatus=2        " 显示状态栏
@@ -19,7 +18,7 @@ set tabstop=4           " tab长度
 set expandtab
 set shiftwidth=4
 set incsearch
-set smartindent         " dian k k缩进
+set smartindent         " 缩进
 set hlsearch            " 高亮搜索
 set undofile            " 撤销文件
 set undodir=~/.vim/undo
@@ -29,22 +28,103 @@ set smartcase
 set background=dark
 set nrformats=bin,hex   " C-a C-x 设置
 set conceallevel=1      " 不隐藏特殊字符
-
 set signcolumn=yes
+" set signcolumn=number
+" set wildmenu            " 命令行补全
+" set wildmode=list:longest,full
+" set wildignore=*.swp,*.bak,*.pyc,*.class,*.o,*.obj,*.exe,*.dll,*.so,*.dylib,*.zip,*.tar.gz,*.rar,*.7z
+" set wildignorecase      " 忽略大小写
+" set scrolloff=3         " 光标上下留白
+" set sidescrolloff=5     " 光标左右留白
+
 set updatetime=300
 
 set listchars=eol:¬,tab:>-,trail:~,extends:>,precedes:<,nbsp:.,multispace:---+,conceal:#
 set list
 
+if exists('$PREFIX') && executable($PREFIX . '/bin/zsh')
+    set shell=$PREFIX/bin/zsh
+elseif executable('zsh')
+    set shell=zsh
+elseif exists('$PREFIX') && executable($PREFIX . '/bin/bash')
+    set shell=$PREFIX/bin/bash
+elseif executable('bash')
+    set shell=bash
+elseif exists('$SHELL')
+    set shell=$SHELL
+else
+    set shell=sh
+endif
+
 if executable('fcitx5-remote')
     " 1 is inactivate, 2 is activate
     let fcitx5enabled = system('fcitx5-remote')
     let insertstate = fcitx5enabled
-    autocmd InsertLeave * let insertstate = system('fcitx5-remote') | call system('fcitx5-remote -c')
-    autocmd InsertEnter * if insertstate == 2 | call system('fcitx5-remote -o') | endif
+    augroup fcitx5
+        autocmd!
+        autocmd InsertLeave * let insertstate = system('fcitx5-remote') | call system('fcitx5-remote -c')
+        autocmd InsertEnter * if insertstate == 2 | call system('fcitx5-remote -o') | endif
+    augroup END
 endif
 
-autocmd BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
+function! CommentFoldV() range abort
+  " 1) Determine range (visual or range args)
+  let s = (a:firstline > 0 ? a:firstline : getpos("'<")[1])
+  let e = (a:lastline  > 0 ? a:lastline  : getpos("'>")[1])
+  if s == 0 || e == 0
+    echohl WarningMsg | echom "[CommentFoldV] No valid selection." | echohl None
+    return
+  endif
+  if s > e | let [s,e] = [e,s] | endif
+
+  " 2) Fold markers
+  let [open_m, close_m] = split(&foldmarker, ',')
+  if empty(open_m) | let open_m = '{{{' | endif
+  if empty(close_m) | let close_m = '}}}' | endif
+
+  " 3) Comment string
+  let cs = &commentstring
+  if empty(cs) || cs ==# '%s'
+    let cs = '# %s'
+  endif
+
+  " 4) Indent and lines to insert
+  let indent      = matchstr(getline(s), '^\s*')
+  let tag         = 'FOLD_TITLE'
+  let open_line   = indent . printf(cs, open_m . ' ' . tag)
+  let close_line  = indent . printf(cs, close_m)
+
+  " 5) Insert closing and opening markers
+  call append(e, close_line)
+  call append(s - 1, open_line)
+
+  " 6) Move cursor and visually select tag
+  let open_lnum = s
+  let line_text = getline(open_lnum)
+  let c0 = match(line_text, '\V' . tag)
+  if c0 >= 0
+    call cursor(open_lnum, c0 + 1)
+    execute 'normal! v' . (strlen(tag) - 1) . 'l' . "\<C-g>"
+  else
+    call cursor(open_lnum, 1)
+  endif
+endfunction
+
+xnoremap <silent> <leader>fm :<C-U>call CommentFoldV()<CR>
+
+augroup vimrc
+    autocmd!
+
+    autocmd BufWritePre * :%s/\n\+\%$//e " 删除文件末尾空行
+    autocmd FileType help,nerdtree,Mundo nnoremap <buffer> <Esc> :q<CR>
+
+    autocmd BufWinEnter * if line("'\"") > 1 && line("'\"") <= line("$") | keepjumps execute "normal! g'\"" | silent! normal! zvzz | endif
+
+    autocmd BufReadPost * if &filetype !=# 'markdown' | silent! %s/\s\+$//e | endif
+    autocmd BufWritePre * if &filetype !=# 'markdown' | silent! %s/\s\+$//e | endif
+
+augroup END
+
 
 if has("termguicolors")
     " fix bug for vim
@@ -85,15 +165,32 @@ endif
 let mapleader = "\\"
 let maplocalleader = "\\\\"
 
+let g:clipboard = {
+            \ 'name': 'termux',
+            \ 'copy': {
+                \ '+': 'termux-clipboard-set',
+                \ '*': 'termux-clipboard-set',
+            \ },
+            \ 'paste': {
+                \ '+': 'termux-clipboard-get',
+                \ '*': 'termux-clipboard-get',
+            \ },
+            \ 'cache_enabled': 0,
+            \ }
+
 iabbrev @@ DreamOneX <me@dreamonex.eu.org>
+iabbrev vim: vim:ft=bash:fdm=marker
+iabbrev shebang #!/usr/bin/env
 
 nnoremap <leader>pp :set paste!<CR>
+nnoremap <leader>lc :set cursorcolumn!<CR>
 tnoremap <ESC><ESC><ESC><ESC> <C-\><C-n>
 
 nnoremap <silent> <leader>ev :split $MYVIMRC<CR>
 nnoremap <silent> <leader>rl :source $MYVIMRC<CR>
 nnoremap <silent> <leader>evd :e $MYVIMRC<CR>
 nnoremap <silent> <space>r :set relativenumber!<CR>
+nnoremap <silent> <space><space>wh :help <c-R><c-W><CR>
 
 nnoremap <silent> <C-k> :NERDTreeToggle<CR>
 nnoremap <silent> <C-h> :NERDTreeFind<CR>
@@ -102,7 +199,62 @@ nnoremap <silent> <C-j> :NERDTreeRefreshRoot<CR>
 noremap -= <ESC>
 inoremap -= <ESC>
 
+inoremap <M-k> <Up>
+inoremap <M-j> <Down>
+inoremap <M-h> <Left>
+inoremap <M-l> <Right>
+
+inoremap <silent> <C-z> <C-o><C-z>
+
 nnoremap <Leader>expt :%s/	/    /g<CR>
+
+command! -nargs=+ -complete=command YankErr call s:yank_err(<f-args>)
+
+function! s:yank_err(...) abort
+    let l:args = a:000
+
+    if len(l:args) > 1 && l:args[0] =~ '^["+*a-zA-Z0-9]$'
+        let l:reg = l:args[0]
+        let l:cmd = join(l:args[1:], ' ')
+    else
+        let l:reg = '"'
+        let l:cmd = join(l:args, ' ')
+    endif
+
+    try
+        execute l:cmd
+    catch /.*/
+        execute 'let @' . l:reg . ' = v:exception'
+        echom 'Error yanked to register ' . l:reg
+    endtry
+endfunction
+
+let g:clipboard_enabled = 0
+
+function! ToggleClipboardYankPaste() abort
+  if g:clipboard_enabled
+    " 恢复默认映射
+    silent! unmap y
+    silent! unmap p
+    silent! unmap Y
+    silent! unmap P
+    let g:clipboard_enabled = 0
+    echo '📋 剪贴板模式已关闭（y/p 不影响系统剪贴板）'
+  else
+    " 只映射 y 和 p 到系统剪贴板
+    nnoremap y "+y
+    nnoremap Y "+Y
+    nnoremap p "+p
+    nnoremap P "+P
+    vnoremap y "+y
+    vnoremap p "+p
+    let g:clipboard_enabled = 1
+    echo '📋 剪贴板模式已启用（y/p 映射到系统剪贴板）'
+  endif
+endfunction
+
+command! ToggleClipboardYankPaste call ToggleClipboardYankPaste()
+nnorema <leader>tc :ToggleClipboardYankPaste<CR>
 
 "vim-plug start
 call plug#begin('~/.vim/plugged')
@@ -121,7 +273,7 @@ Plug 'PhilRunninger/nerdtree-visual-selection'      " NerdTree Ops
 
 Plug 'majutsushi/tagbar'                            " ctags
 Plug 'Yggdroot/LeaderF', { 'do': './install.sh'  }  " 搜索
-Plug 'jiangmiao/auto-pairs'                         " 括号
+" Plug 'jiangmiao/auto-pairs'                         " 括号
 Plug 'neoclide/coc.nvim', {'branch': 'release'}     " coc.nvim
 Plug 'Chiel92/vim-autoformat'                       " 自动格式化
 Plug 'mtdl9/vim-log-highlighting'                   " 日志高亮
@@ -163,7 +315,14 @@ call plug#end()
 
 colorscheme atom-dark
 
-let g:AutoPairs = {'(':')', '[':']', '{':'}',"'":"'",'"':'"', '<':'>'}
+" let g:AutoPairs = {'(':')', '[':']', '{':'}',"'":"'",'"':'"', '<':'>'}
+" if vimscript, dont include "
+" augroup AutoPairs
+"     autocmd!
+"     autocmd FileType nerdtree,tagbar let b:AutoPairs = {}
+"     autocmd FileType vim let b:AutoPairs = {'(':')', '[':']', '{':'}',"'":"'"}
+" augroup END
+
 let g:indent_guides_guide_size = 1  " 对齐线的尺寸
 let g:indent_guides_start_level = 1  " 可视化显示缩进层数
 let g:indentLine_color_term = 239
@@ -206,6 +365,7 @@ let g:rainbow_conf = {
         \       'nerdtree': 0,
     \   }
     \}
+let g:rainbow_active = 1
 
 " let g:webdevicons_enable_nerdtree = 0
 
@@ -226,7 +386,6 @@ let g:NERDTreeGitStatusShowIgnored = 0
 let g:NERDTreeGitStatusUseNerdFonts = 0
 " end
 
-let g:rainbow_active = 1
 let g:airline#extensions#tabline#enabled = 1
 let g:airline#extensions#tabline#left_alt_sep = '|'
 let g:airline#extensions#tabline#buffer_nr_show = 0
@@ -297,6 +456,7 @@ nmap <space>j <Plug>(easymotion-j)
 nmap <space>k <Plug>(easymotion-k)
 nmap <space>h <Plug>(easymotion-linebackward)
 nmap <space>s <Plug>(easymotion-s2)
+nmap <space>ns <plug>(easymotion-sn)
 " " 忽略大小写
 let g:EasyMotion_smartcase = 1
 
@@ -316,8 +476,13 @@ inoremap <expr><S-TAB> coc#pum#visible() ? coc#pum#prev(1) : "\<C-h>"
 
 " Make <CR> to accept selected completion item or notify coc.nvim to format
 " <C-g>u breaks current undo, please make your own choice.
-inoremap <silent><expr> <CR> coc#pum#visible() ? coc#pum#confirm()
+inoremap <silent><expr> <M-f> coc#pum#visible() ? coc#pum#confirm()
                               \: "\<C-g>u\<CR>\<c-r>=coc#on_enter()\<CR>"
+
+" if coc#pum#visible(), <ESC> will close the completion menu
+inoremap <silent><expr> <M-q>
+      \ coc#pum#visible() ? coc#pum#cancel() :
+      \ "\<M-q>"
 
 function! CheckBackspace() abort
   let col = col('.') - 1
@@ -349,7 +514,19 @@ function! ShowDocumentation()
     endif
 endfunction
 
-autocmd CursorHold * silent call CocActionAsync('highlight')
+augroup coc
+    autocmd!
+    " Highlight symbol under cursor on CursorHold
+    autocmd CursorHold * silent call CocActionAsync('highlight')
+    " Show documentation on CursorHold
+    " autocmd CursorHold * silent call ShowDocumentation()
+    " Show signature help on CursorHold
+    " autocmd CursorHold * silent call CocActionAsync('signatureHelp')
+    " Show diagnostics on CursorHold
+    " autocmd CursorHold * silent call CocActionAsync('diagnosticList')
+    " Show code actions on CursorHold
+    " autocmd CursorHold * silent call CocActionAsync('codeAction', 'source')
+augroup END
 
 " Remap <C-f> and <C-b> to scroll float windows/popups
 if has('nvim-0.4.0') || has('patch-8.2.0750')
@@ -453,6 +630,13 @@ nnoremap <leader>af :Autoformat<CR>
 
 " LeaderF
 let g:Lf_RootMarkers = ['.git', '.svn', '.hg', '.project', '.root']
+let g:Lf_HiddenFiles = 1
+let g:Lf_ShowDevIcons = 1
+let g:Lf_UseVersionControl = 1
+let g:Lf_PopupShowBorder = 0
+let g:Lf_PopupBorders = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']
+let g:Lf_PreviewResultSyntax = 1
+
 nnoremap <silent> <space><space>r :Leaderf rg<CR>
 nnoremap <silent> <space><space>l :LeaderfLine<CR>
 nnoremap <silent> <space><space>f :LeaderfFile<CR>
@@ -543,6 +727,11 @@ require("dial.config").augends:register_group{
       cyclic = true,
     },
     augend.semver.alias.semver,
+    augend.constant.new{
+        elements = {"tcp", "udp"},
+        word = true,
+        cyclic = true,
+    }
   },
   visual = {
     augend.integer.alias.decimal_int,

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # skp.sh — cross-distro package picker+installer with fzf/skim (or a custom picker)
-# Built-ins: termux-apt, termux-pacman, apt, pacman, yay, paru, zypper, dnf, yum, eix, emerge, brew, nix, snap, opkg, npm, pip
+# Built-ins: termux-apt, termux-pacman, apt, pacman, yay, paru, zypper, dnf, yum, eix, emerge, brew, nix, snap, opkg, npm, pip, apk
 # Custom PMs: --pm NAME reads ${NAME}_list_cmd / ${NAME}_info_cmd / ${NAME}_install_cmd (hyphens -> underscores)
 
 # --- Configurable options (override via env) ---
@@ -221,6 +221,9 @@ EOF
         # --- OpenWrt ---
         elif command -v opkg   >/dev/null 2>&1; then pm="opkg"
 
+        # --- Alpine ---
+        elif command -v apk    >/dev/null 2>&1; then pm="apk"
+
         # --- Cross-platform userland (not OS-native): nix outranks snap ---
         elif command -v nix    >/dev/null 2>&1; then pm="nix"
         elif command -v brew   >/dev/null 2>&1; then pm="brew"
@@ -342,17 +345,26 @@ EOF
     [ -n "$_l" ] && pkgs+=("$_l")
   done <<< "$selection"
 
-  local pkg cmd esc
+  # --- install (batch, shell-escaped) ---
+  local esc_pkgs=() pkg
   for pkg in "${pkgs[@]}"; do
-    esc=$(printf "%q" "$pkg")
-    if [[ "$install_cmd" == *"{}"* ]]; then
-      # Replace occurrences of '{}' in install_cmd with the escaped package name.
-      cmd=${install_cmd//\{\}/$esc}
-    else
-      cmd="$install_cmd $esc"
-    fi
-    eval "$cmd"
+    esc_pkgs+=("$(printf "%q" "$pkg")")
   done
+
+  # Join escaped package names into one space-separated string
+  local pkg_list
+  pkg_list="$(printf '%s ' "${esc_pkgs[@]}")"
+  pkg_list="${pkg_list% }"   # trim trailing space
+
+  local cmd
+  if [[ "$install_cmd" == *"{}"* ]]; then
+    # Replace occurrences of '{}' in install_cmd with the full escaped package list.
+    cmd=${install_cmd//\{\}/$pkg_list}
+  else
+    cmd="$install_cmd $pkg_list"
+  fi
+
+  eval "$cmd"
 }
 
 # Allow script to be sourced or run directly

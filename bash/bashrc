@@ -109,7 +109,7 @@ fi
 # {{{ VISUAL
 if [ -n "$DISPLAY" ] || [ -n "$WAYLAND_DISPLAY" ]; then
     if command -v neovide >/dev/null 2>&1; then
-        export VISUAL='neovide --multigrid'
+        export VISUAL='neovide'
     elif command -v code >/dev/null 2>&1; then
         echo -e "${YELLOW}${BOLD}[WARN] neovide not found, but code founded. VISUAL set to it${NC}"
         export VISUAL='code --wait'

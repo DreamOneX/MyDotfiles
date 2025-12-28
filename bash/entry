@@ -1,0 +1,3 @@
+[[ $- != *i* ]] && return
+source ~/MyDotfiles/bash/bashrc
+export LANG=en_US.UTF-8

@@ -136,22 +136,31 @@ if has("termguicolors")
 endif
 
 if exists("g:neovide")
-    set guifont=Sauce\ Code\ Pro\ Medium\ Nerd\ Font\ Complete:h14
-    let g:neovide_scale_factor = 1.0
+    set guifont=JetBrainsMono\ Nerd\ Font\ Mono:h14
+    let g:neovide_scale_factor = 0.7
+
+    let g:neovide_text_gamma = 0.8
+    let g:neovide_text_contrast = 0.1
+
+    let g:neovide_padding_top = 0
+    let g:neovide_padding_bottom = 0
+    let g:neovide_padding_right = 0
+    let g:neovide_padding_left = 0
+
     let g:neovide_floating_blur_amount_x = 2.0
     let g:neovide_floating_blur_amount_y = 2.0
     let g:transparency = 0.8
-    let g:neovide_transparency = 0.8
+    let g:neovide_opacity = 0.8
     " let g:neovide_cursor_animation_length = 0
-    " let g:neovide_cursor_vfx_mode = "pixiedust"
-    " let g:neovide_cursor_vfx_opacity = 300.0
-    " let g:neovide_cursor_vfx_particle_lifetime = 4.2
-    " let g:neovide_cursor_vfx_particle_density = 32.0
-    " let g:neovide_cursor_vfx_particle_speed = 8.0
-    " let g:neovide_cursor_vfx_particle_phase = 1.2
-    " let g:neovide_cursor_vfx_particle_curl = 0.6
-    " let g:neovide_cursor_animation_length = 0.05
-    " let g:neovide_cursor_trail_size = 0.8
+    let g:neovide_cursor_vfx_mode = "pixiedust"
+    let g:neovide_cursor_vfx_opacity = 300.0
+    let g:neovide_cursor_vfx_particle_lifetime = 4.2
+    let g:neovide_cursor_vfx_particle_density = 8.0
+    let g:neovide_cursor_vfx_particle_speed = 8.0
+    let g:neovide_cursor_vfx_particle_phase = 1.2
+    let g:neovide_cursor_vfx_particle_curl = 0.6
+    let g:neovide_cursor_animation_length = 0.05
+    let g:neovide_cursor_trail_size = 0.8
     " let g:neovide_cursor_vfx_mode = "railgun"
     " let g:neovide_cursor_vfx_opacity = 300.0
     " let g:neovide_cursor_vfx_particle_lifetime = 1.8
@@ -165,15 +174,28 @@ endif
 let mapleader = "\\"
 let maplocalleader = "\\\\"
 
+" let g:clipboard = {
+"             \ 'name': 'termux',
+"             \ 'copy': {
+"                 \ '+': 'termux-clipboard-set',
+"                 \ '*': 'termux-clipboard-set',
+"             \ },
+"             \ 'paste': {
+"                 \ '+': 'termux-clipboard-get',
+"                 \ '*': 'termux-clipboard-get',
+"             \ },
+"             \ 'cache_enabled': 0,
+"             \ }
+
 let g:clipboard = {
-            \ 'name': 'termux',
+            \ 'name': 'wayland',
             \ 'copy': {
-                \ '+': 'termux-clipboard-set',
-                \ '*': 'termux-clipboard-set',
+                \ '+': 'wl-copy',
+                \ '*': 'wl-copy',
             \ },
             \ 'paste': {
-                \ '+': 'termux-clipboard-get',
-                \ '*': 'termux-clipboard-get',
+                \ '+': 'wl-paste',
+                \ '*': 'wl-paste',
             \ },
             \ 'cache_enabled': 0,
             \ }
@@ -196,8 +218,8 @@ nnoremap <silent> <C-k> :NERDTreeToggle<CR>
 nnoremap <silent> <C-h> :NERDTreeFind<CR>
 nnoremap <silent> <C-j> :NERDTreeRefreshRoot<CR>
 
-noremap -= <ESC>
-inoremap -= <ESC>
+" noremap -= <ESC>
+" inoremap -= <ESC>
 
 inoremap <M-k> <Up>
 inoremap <M-j> <Down>

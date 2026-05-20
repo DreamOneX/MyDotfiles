@@ -29,10 +29,10 @@ unblocks other cleanup.
 - [ ] Decide whether to set `MANPAGER=manbat` after `manbat` is fixed.
       Source: `bashrc`
 
-- [ ] Make the `skp` configuration section functional.
+- [x] Make the `skp` configuration section functional.
       Source: `func/skp.sh`
 
-- [ ] Rework `skp` package-manager detection into groups and preferences.
+- [x] Rework `skp` package-manager detection into groups and preferences.
       Source: `func/skp.sh`
 
 ## P2 - Useful Feature Completion

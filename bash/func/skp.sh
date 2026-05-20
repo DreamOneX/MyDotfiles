@@ -1,16 +1,106 @@
 #!/usr/bin/env bash
+# vim:ft=bash:foldmethod=marker
 # skp.sh — cross-distro package picker+installer with fzf/skim (or a custom picker)
 # Built-ins: termux-apt, termux-pacman, apt, pacman, yay, paru, zypper, dnf, yum, eix, emerge, brew, nix, snap, opkg, npm, pip, apk
 # Custom PMs: --pm NAME reads ${NAME}_list_cmd / ${NAME}_info_cmd / ${NAME}_install_cmd (hyphens -> underscores)
 
-# --- Configurable options (override via env) ---
-# TODO: this section is currently non-functional
-# : "${SKP_PICKER_ORDER:=fzf,sk}" # comma-separated preferred pickers for 'auto' (in order)
-# : "${SKP_PM_ORDER:=termux-apt,paru,yay,pacman,apt,zypper,dnf,yum,eix,emerge,opkg,nix,brew,snap}" # comma-separated preferred PMs for 'auto' (in order)
-# TODO: devide different pm into groups and prefer some groups over others
-# e.g. termux > arch family > deb-based > rpm-based > gentoo > openwrt > cross-platform userland
-# and SKP_XXX_PREFER lists to tweak order inside groups
-# e.g. SKP_ARCH_PREFER=paru,yay,pacman
+# {{{ Configuration
+
+# {{{ SKP_PICKER_ORDER
+# SKP_PICKER_ORDER:
+#   fzf = use fzf when available
+#   sk  = use skim when available
+#   default order: fzf, sk
+: "${SKP_PICKER_ORDER:=fzf,sk}"
+# }}}
+
+# {{{ SKP_PM_ORDER
+# SKP_PM_ORDER:
+#   full package-manager order override for `--pm auto`
+#   empty = use SKP_PM_GROUP_ORDER and group-specific preference lists (default)
+: "${SKP_PM_ORDER:=}"
+# }}}
+
+# {{{ SKP_PM_GROUP_ORDER
+# SKP_PM_GROUP_ORDER:
+#   termux   = Termux package managers
+#   arch     = Arch-family package managers
+#   deb      = Debian-family package managers
+#   rpm      = RPM-family package managers
+#   gentoo   = Gentoo package managers
+#   openwrt  = OpenWrt package managers
+#   alpine   = Alpine package managers
+#   userland = cross-platform userland package managers
+#   default order: termux, arch, deb, rpm, gentoo, openwrt, alpine, userland
+: "${SKP_PM_GROUP_ORDER:=termux,arch,deb,rpm,gentoo,openwrt,alpine,userland}"
+# }}}
+
+# {{{ SKP_TERMUX_PREFER
+# SKP_TERMUX_PREFER:
+#   termux-apt    = use Termux pkg/apt
+#   termux-pacman = use Termux pacman
+#   default order: termux-apt, termux-pacman
+: "${SKP_TERMUX_PREFER:=termux-apt,termux-pacman}"
+# }}}
+
+# {{{ SKP_ARCH_PREFER
+# SKP_ARCH_PREFER:
+#   paru   = use paru when available
+#   yay    = use yay when available
+#   pacman = use pacman when available
+#   default order: paru, yay, pacman
+: "${SKP_ARCH_PREFER:=paru,yay,pacman}"
+# }}}
+
+# {{{ SKP_DEB_PREFER
+# SKP_DEB_PREFER:
+#   apt = use apt/apt-cache when available
+#   default order: apt
+: "${SKP_DEB_PREFER:=apt}"
+# }}}
+
+# {{{ SKP_RPM_PREFER
+# SKP_RPM_PREFER:
+#   zypper = use zypper when available
+#   dnf    = use dnf when available
+#   yum    = use yum when available
+#   default order: zypper, dnf, yum
+: "${SKP_RPM_PREFER:=zypper,dnf,yum}"
+# }}}
+
+# {{{ SKP_GENTOO_PREFER
+# SKP_GENTOO_PREFER:
+#   eix    = use eix for package lookup, emerge for install
+#   emerge = use emerge for lookup and install
+#   default order: eix, emerge
+: "${SKP_GENTOO_PREFER:=eix,emerge}"
+# }}}
+
+# {{{ SKP_OPENWRT_PREFER
+# SKP_OPENWRT_PREFER:
+#   opkg = use opkg when available
+#   default order: opkg
+: "${SKP_OPENWRT_PREFER:=opkg}"
+# }}}
+
+# {{{ SKP_ALPINE_PREFER
+# SKP_ALPINE_PREFER:
+#   apk = use apk when available
+#   default order: apk
+: "${SKP_ALPINE_PREFER:=apk}"
+# }}}
+
+# {{{ SKP_USERLAND_PREFER
+# SKP_USERLAND_PREFER:
+#   nix  = use nix-env/nix when available
+#   brew = use Homebrew when available
+#   snap = use snap when available
+#   default order: nix, brew, snap
+#   npm/pip are explicit opt-in via --pm or SKP_PM_ORDER
+: "${SKP_USERLAND_PREFER:=nix,brew,snap}"
+# }}}
+
+# }}}
 
 # --- Resolve script dir (handles symlinks) ---
 SOURCE="${BASH_SOURCE[0]}"
@@ -47,17 +137,100 @@ _setup_colors() {
   fi
 }
 
+_skp_split_list() {
+  local list="${1//,/ }"
+  local item
+  for item in $list; do
+    [ -n "$item" ] && printf '%s\n' "$item"
+  done
+}
+
+_skp_join_list() {
+  local list="${1//,/ }"
+  local out="" item
+  for item in $list; do
+    [ -n "$item" ] || continue
+    if [ -n "$out" ]; then
+      out="$out, $item"
+    else
+      out="$item"
+    fi
+  done
+  printf '%s' "$out"
+}
+
+_skp_is_termux() {
+  [ -n "${TERMUX_VERSION:-}" ] && return 0
+  [[ "${PREFIX:-}" == *"/com.termux/files/usr"* ]] && return 0
+  [ -x "/data/data/com.termux/files/usr/bin/pkg" ] && return 0
+  command -v termux-info >/dev/null 2>&1 && return 0
+  return 1
+}
+
+_skp_pm_available() {
+  case "$1" in
+    termux-apt)    _skp_is_termux && command -v pkg >/dev/null 2>&1 ;;
+    termux-pacman) _skp_is_termux && command -v pacman >/dev/null 2>&1 ;;
+    apt)           command -v apt >/dev/null 2>&1 || command -v apt-cache >/dev/null 2>&1 ;;
+    pacman|yay|paru|zypper|dnf|yum|eix|emerge|brew|nix|snap|opkg|apk|npm)
+                   command -v "$1" >/dev/null 2>&1 ;;
+    pip)           command -v python3 >/dev/null 2>&1 && python3 -m pip -V >/dev/null 2>&1 ;;
+    *)             return 1 ;;
+  esac
+}
+
+_skp_group_pm_list() {
+  case "$1" in
+    termux)  printf '%s\n' "$SKP_TERMUX_PREFER" ;;
+    arch)    printf '%s\n' "$SKP_ARCH_PREFER" ;;
+    deb)     printf '%s\n' "$SKP_DEB_PREFER" ;;
+    rpm)     printf '%s\n' "$SKP_RPM_PREFER" ;;
+    gentoo)  printf '%s\n' "$SKP_GENTOO_PREFER" ;;
+    openwrt) printf '%s\n' "$SKP_OPENWRT_PREFER" ;;
+    alpine)  printf '%s\n' "$SKP_ALPINE_PREFER" ;;
+    userland) printf '%s\n' "$SKP_USERLAND_PREFER" ;;
+    *)       printf '%s\n' "$1" ;;
+  esac
+}
+
+_skp_resolve_auto_picker() {
+  local picker
+  while IFS= read -r picker; do
+    if command -v "$picker" >/dev/null 2>&1; then
+      printf '%s\n' "$picker"
+      return 0
+    fi
+  done < <(_skp_split_list "$SKP_PICKER_ORDER")
+  return 1
+}
+
+_skp_resolve_auto_pm() {
+  local group pm
+
+  if [ -n "$SKP_PM_ORDER" ]; then
+    while IFS= read -r pm; do
+      if _skp_pm_available "$pm"; then
+        printf '%s\n' "$pm"
+        return 0
+      fi
+    done < <(_skp_split_list "$SKP_PM_ORDER")
+    return 1
+  fi
+
+  while IFS= read -r group; do
+    while IFS= read -r pm; do
+      if _skp_pm_available "$pm"; then
+        printf '%s\n' "$pm"
+        return 0
+      fi
+    done < <(_skp_split_list "$(_skp_group_pm_list "$group")")
+  done < <(_skp_split_list "$SKP_PM_GROUP_ORDER")
+
+  return 1
+}
+
 # --- skp function ---
 skp() {
-  # Termux detection
-  _is_termux() {
-    [ -n "${TERMUX_VERSION:-}" ] && return 0
-    [[ "${PREFIX:-}" == *"/com.termux/files/usr"* ]] && return 0
-    [ -x "/data/data/com.termux/files/usr/bin/pkg" ] && return 0
-    command -v termux-info >/dev/null 2>&1 && return 0
-    return 1
-  }
-
   _die_missing_arg() {
     printf >&2 "%s%s[ERROR]%s option '%s' requires a value.\n" "$RED" "$BOLD" "$NC" "$1"
     return 2
@@ -94,27 +267,30 @@ skp() {
         [ "$color_pref" = "on" ] && _setup_colors force_on
         [ "$color_pref" = "off" ] && _setup_colors force_off
         cat <<EOF
-${BOLD}Usage:${NC} ${CYAN}skp${NC} ${GREEN}[--picker auto|fzf|sk|<custom>]${NC} ${GREEN}[--pm auto|termux-apt|termux-pacman|apt|pacman|yay|paru|zypper|dnf|yum|eix|emerge|opkg|brew|nix|snap|npm|pip|<custom>]${NC}
+${BOLD}Usage:${NC} ${CYAN}skp${NC} ${GREEN}[--picker auto|fzf|sk|<custom>]${NC} ${GREEN}[--pm auto|termux-apt|termux-pacman|apt|pacman|yay|paru|zypper|dnf|yum|eix|emerge|opkg|apk|brew|nix|snap|npm|pip|<custom>]${NC}
        ${GREEN}[--list-cmd 'CMD'] [--info-cmd 'CMD'] [--install-cmd 'CMD']${NC} ${GREEN}[--color|--no-color]${NC}
 
 ${BOLD}Notes:${NC}
 - ${YELLOW}{}${NC} inside ${CYAN}--info-cmd${NC} and ${CYAN}--install-cmd${NC} is replaced with the candidate package name.
-- Built-in groups (autodetect order):
-  - Termux → ${CYAN}termux-apt${NC}
-  - Arch family → ${CYAN}paru, yay, pacman${NC}
-  - Deb-based → ${CYAN}apt${NC}
-  - RPM-based → ${CYAN}zypper, dnf, yum${NC}
-  - Gentoo → ${CYAN}eix, emerge${NC}
-  - OpenWrt → ${CYAN}opkg${NC}
-  - Cross-platform userland → ${CYAN}nix, brew, snap${NC}
-- npm / pip are supported via ${CYAN}--pm npm${NC} / ${CYAN}--pm pip${NC}, but are ${BOLD}not${NC} chosen by auto-detect. but please be aware that ${CYAN}npm${NC} and ${CYAN}pip${NC} lists only globally installed packages.
+- Auto picker order: ${CYAN}$(_skp_join_list "$SKP_PICKER_ORDER")${NC}
+- Auto PM group order: ${CYAN}$(_skp_join_list "$SKP_PM_GROUP_ORDER")${NC}
+  - Termux → ${CYAN}$(_skp_join_list "$SKP_TERMUX_PREFER")${NC}
+  - Arch family → ${CYAN}$(_skp_join_list "$SKP_ARCH_PREFER")${NC}
+  - Deb-based → ${CYAN}$(_skp_join_list "$SKP_DEB_PREFER")${NC}
+  - RPM-based → ${CYAN}$(_skp_join_list "$SKP_RPM_PREFER")${NC}
+  - Gentoo → ${CYAN}$(_skp_join_list "$SKP_GENTOO_PREFER")${NC}
+  - OpenWrt → ${CYAN}$(_skp_join_list "$SKP_OPENWRT_PREFER")${NC}
+  - Alpine → ${CYAN}$(_skp_join_list "$SKP_ALPINE_PREFER")${NC}
+  - Cross-platform userland → ${CYAN}$(_skp_join_list "$SKP_USERLAND_PREFER")${NC}
+- Override auto PM order with ${CYAN}SKP_PM_ORDER${NC}; override picker order with ${CYAN}SKP_PICKER_ORDER${NC}.
+- npm / pip are supported via ${CYAN}--pm npm${NC} / ${CYAN}--pm pip${NC}, but are ${BOLD}not${NC} chosen by default auto-detect. They can be included via ${CYAN}SKP_PM_ORDER${NC}.
 - Custom PM: set ${CYAN}\${NAME}_list_cmd / \${NAME}_info_cmd / \${NAME}_install_cmd${NC} (hyphens → underscores), then ${CYAN}skp --pm NAME${NC}.
 - Custom picker allowed via ${CYAN}--picker <binary>${NC}; it must exist in PATH. If it doesn't support inline-info flags, those are omitted.
 
 ${BOLD}Examples:${NC}
 - ${CYAN}skp --picker fzf --pm paru${NC}
 - ${CYAN}skp --pm opkg${NC}
-- ${CYAN}skp --list-cmd 'snap find "" | awk "NR>1{print \\$1}"' --info-cmd 'snap info {}' --install-cmd 'sudo snap install {}'${NC}
+- ${CYAN}skp --list-cmd 'snap find "" | awk "NR>1{print \\\$1}"' --info-cmd 'snap info {}' --install-cmd 'sudo snap install {}'${NC}
 EOF
         return 0 ;;
       --) shift; break ;;
@@ -131,16 +307,12 @@ EOF
   [ "$color_pref" = "on" ] && _setup_colors force_on
   [ "$color_pref" = "off" ] && _setup_colors force_off
 
-  # --- Resolve picker (supports custom names; auto prefers fzf -> sk) ---
+  # --- Resolve picker (supports custom names; auto follows SKP_PICKER_ORDER) ---
   local sel=""
   case "$want_picker" in
     auto)
-      if command -v fzf >/dev/null 2>&1; then
-        sel="fzf"
-      elif command -v sk >/dev/null 2>&1; then
-        sel="sk"
-      else
-        printf >&2 "%s%s[WARN]%s no picker found (looked for fzf, sk). skp disabled.\n" "$YELLOW" "$BOLD" "$NC"
+      if ! sel="$(_skp_resolve_auto_picker)"; then
+        printf >&2 "%s%s[WARN]%s no picker found (looked for %s). skp disabled.\n" "$YELLOW" "$BOLD" "$NC" "$(_skp_join_list "$SKP_PICKER_ORDER")"
         return 1
       fi
       ;;
@@ -170,14 +342,14 @@ EOF
     pm="custom"
   else
     case "$want_pm" in
-      termux-apt|termux-pacman|apt|pacman|yay|paru|zypper|dnf|yum|eix|emerge|brew|nix|snap|opkg|npm|pip)
+      termux-apt|termux-pacman|apt|pacman|yay|paru|zypper|dnf|yum|eix|emerge|brew|nix|snap|opkg|apk|npm|pip)
         pm="$want_pm"
         ;;
       auto) pm="" ;;
       *)
         # env-driven custom (hyphens -> underscores) via indirect expansion
         local envkey list_var info_var inst_var
-        envkey=$(printf "%s" "$want_pm" | sed 's/-/_/g')
+        envkey="${want_pm//-/_}"
         list_var="${envkey}_list_cmd"
         info_var="${envkey}_info_cmd"
         inst_var="${envkey}_install_cmd"
@@ -197,39 +369,7 @@ EOF
 
     # Autodetect if still unresolved
     if [ -z "$pm" ]; then
-      if _is_termux; then
-        pm="termux-apt"
-      fi
-      if [ -z "$pm" ]; then
-        # --- Arch family (AUR helpers are preferred if installed; otherwise pacman) ---
-        if   command -v paru   >/dev/null 2>&1; then pm="paru"
-        elif command -v yay    >/dev/null 2>&1; then pm="yay"
-        elif command -v pacman >/dev/null 2>&1; then pm="pacman"
-
-        # --- Deb-based ---
-        elif command -v apt    >/dev/null 2>&1; then pm="apt"
-
-        # --- RPM-based (SUSE/Fedora/RHEL) ---
-        elif command -v zypper >/dev/null 2>&1; then pm="zypper"
-        elif command -v dnf    >/dev/null 2>&1; then pm="dnf"
-        elif command -v yum    >/dev/null 2>&1; then pm="yum"
-
-        # --- Gentoo (prefer eix; fallback to emerge) ---
-        elif command -v eix    >/dev/null 2>&1; then pm="eix"
-        elif command -v emerge >/dev/null 2>&1; then pm="emerge"
-
-        # --- OpenWrt ---
-        elif command -v opkg   >/dev/null 2>&1; then pm="opkg"
-
-        # --- Alpine ---
-        elif command -v apk    >/dev/null 2>&1; then pm="apk"
-
-        # --- Cross-platform userland (not OS-native): nix outranks snap ---
-        elif command -v nix    >/dev/null 2>&1; then pm="nix"
-        elif command -v brew   >/dev/null 2>&1; then pm="brew"
-        elif command -v snap   >/dev/null 2>&1; then pm="snap"
-        fi
-      fi
+      pm="$(_skp_resolve_auto_pm)"
     fi
   fi
 

@@ -162,8 +162,11 @@ export PROMPT_COMMAND="history -a; history -n"
 
 # {{{ PAGER
 export PAGER='less -m -RFQ'
-# TODO: export MANPAGER=manbat
-export MANPAGER='less -m -RFQ'
+if [ -x "$SCRIPT_DIR/utils/manbat.sh" ]; then
+    export MANPAGER="$SCRIPT_DIR/utils/manbat.sh --pager"
+else
+    export MANPAGER='less -m -RFQ'
+fi
 # }}}
 
 # {{{ LESS BEAUTIFY

@@ -23,10 +23,10 @@ unblocks other cleanup.
 
 ## P1 - Known Broken Or Incomplete Tools
 
-- [ ] Fix `manbat`.
+- [x] Fix `manbat`.
       Source: `functions.sh`
 
-- [ ] Decide whether to set `MANPAGER=manbat` after `manbat` is fixed.
+- [x] Decide whether to set `MANPAGER=manbat` after `manbat` is fixed.
       Source: `bashrc`
 
 - [x] Make the `skp` configuration section functional.

@@ -13,6 +13,8 @@ _BASH_DOTFILES_HAD_SCRIPT_DIR=0
 [ "${DIR+x}" ] && _BASH_DOTFILES_HAD_DIR=1
 [ "${SCRIPT_DIR+x}" ] && _BASH_DOTFILES_HAD_SCRIPT_DIR=1
 
+__BASH_DOTFILES_DIR="$_BASH_DOTFILES_DIR"
+
 source "$_BASH_DOTFILES_DIR/func/skp.sh"
 source "$_BASH_DOTFILES_DIR/func/tw.sh"
 source "$_BASH_DOTFILES_DIR/func/ps_info.sh"
@@ -46,11 +48,8 @@ run-help() { help "$READLINE_LINE" 2>/dev/null || man "$READLINE_LINE"; }
 # }}}
 
 # {{{ manbat
-# TODO: Buggy, need to fix
 manbat() {
-  local width=$(tput cols)
-  local ll=$((width * 2))
-  sed "1i\\.nf\n.ll ${ll}n" | groff -Tutf8 -mandoc | bat -l man --paging=always
+  "$__BASH_DOTFILES_DIR/utils/manbat.sh" "$@"
 }
 # }}}
 

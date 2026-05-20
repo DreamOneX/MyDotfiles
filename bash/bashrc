@@ -42,7 +42,7 @@ disable_shopt() {
 }
 
 # {{{ file / path
-enable_shopt dotglob     # include hidden files in globs
+# enable_shopt dotglob     # include hidden files in globs
 enable_shopt nocaseglob  # case-insensitive globbing
 enable_shopt globstar    # ** for recursive globbing
 enable_shopt dirspell    # autocorrect minor directory spelling errors

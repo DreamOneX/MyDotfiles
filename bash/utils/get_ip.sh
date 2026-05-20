@@ -85,8 +85,6 @@
 : "${GETIP_TEXT_VALUE:=}"
 # }}}
 
-set -o pipefail
-
 __getip_last_iface=""
 
 # {{{ helpers
@@ -590,7 +588,9 @@ USAGE
 # }}}
 
 # {{{ main function
-getip() {
+getip() (
+  set -o pipefail
+
   local version="$GETIP_IP_VERSION"
   local type="$GETIP_IP_TYPE"
   local output="$GETIP_OUTPUT"
@@ -753,7 +753,7 @@ getip() {
       __getip_print_json "$ip" "$type" "$version" "$__getip_last_iface"
       ;;
   esac
-}
+)
 # }}}
 
 if [[ ${BASH_SOURCE[0]} == "$0" ]]; then

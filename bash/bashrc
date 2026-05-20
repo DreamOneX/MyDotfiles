@@ -30,16 +30,41 @@ source $SCRIPT_DIR/utils/shell-colors.sh
 # {{{ SHELL OPTIONS
 
 # TODO(maybe solved): justify the existence of these options
-# TODO: fix the not accurate warning messages
+
+_warn_shopt() {
+    printf '%b[WARN]%b %s\n' "${YELLOW}${BOLD}" "${NC}" "$*" >&2
+}
+
+_shopt_exists() {
+    local opt="$1"
+    local output
+    output="$(shopt -p "$opt" 2>/dev/null)" || [ -n "$output" ]
+}
 
 enable_shopt() {
     local opt="$1"
-    shopt -s "$opt" 2>/dev/null || echo -e "${YELLOW}${BOLD}[WARN] shell option '$opt' not supported.${NC}"
+
+    if ! _shopt_exists "$opt"; then
+        _warn_shopt "invalid shopt option '$opt'; check spelling or Bash version"
+        return 2
+    fi
+
+    shopt -s "$opt" && return 0
+    _warn_shopt "failed to enable shopt option '$opt'"
+    return 1
 }
 
 disable_shopt() {
     local opt="$1"
-    shopt -u "$opt" 2>/dev/null || echo -e "${YELLOW}${BOLD}[WARN] shell option '$opt' not supported.${NC}"
+
+    if ! _shopt_exists "$opt"; then
+        _warn_shopt "invalid shopt option '$opt'; check spelling or Bash version"
+        return 2
+    fi
+
+    shopt -u "$opt" && return 0
+    _warn_shopt "failed to disable shopt option '$opt'"
+    return 1
 }
 
 # {{{ file / path
@@ -68,7 +93,6 @@ enable_shopt sourcepath   # use the PATH variable to find source files
 enable_shopt checkwinsize         # check the window size after each command and update LINES and COLUMNS
 enable_shopt interactive_comments # allow comments in interactive shells
 enable_shopt checkhash            # check the command hash table before executing a command
-enable_shopt lazydir              # delay directory validity check for pushd/popd (useful for NFS)
 enable_shopt extglob              # extended pattern matching operators
 # }}}
 

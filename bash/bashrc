@@ -20,9 +20,25 @@ source $SCRIPT_DIR/utils/shell-colors.sh
 
 # {{{ CONFIGURATION
 
-# {{{ TEST_WORKPLACE_ROOT
-# TEST_WORKPLACE_ROOT is used by function tw to set LOCAL var
+# {{{ TEST_WORKSPACE_ROOT
+# TEST_WORKSPACE_ROOT:
+#   root directory shared by all tw workspaces
+#   default: $HOME/test_workspace
 : "${TEST_WORKSPACE_ROOT:=$HOME/test_workspace}"
+# }}}
+
+# {{{ TW_VCS_DEFAULT
+# TW_VCS_DEFAULT:
+#   whether new tw workspaces should run git init by default
+#   default: 1
+: "${TW_VCS_DEFAULT:=1}"
+# }}}
+
+# {{{ TW_DATE_LIMIT_MONTHS
+# TW_DATE_LIMIT_MONTHS:
+#   month window for short-date workspace matching
+#   default: 12
+: "${TW_DATE_LIMIT_MONTHS:=12}"
 # }}}
 
 # }}}

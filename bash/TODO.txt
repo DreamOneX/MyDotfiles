@@ -41,8 +41,8 @@ unblocks other cleanup.
       Prefer reusing `utils/get_ip.sh`.
       Source: `func/ps_info.sh`
 
-- [ ] Build the `tw` test workspace manager.
-      Consider using `utils/argparser.sh` for its CLI parsing.
+- [x] Build the `tw` test workspace manager.
+      Implemented as a persistent date workspace helper.
       Source: `func/tw.sh`
 
 - [x] Design a lightweight temp manager.

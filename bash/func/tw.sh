@@ -1,49 +1,92 @@
 #!/usr/bin/env bash
-# vim:ft=bash:fdm=marker
+# vim:ft=bash:foldmethod=marker
 
-# TODO: testworkplace manager
+# {{{ Configuration
 
-# {{{ TEST_WORKPLACE_ROOT
-# TEST_WORKPLACE_ROOT is used by function tw to set LOCAL var
+# {{{ TEST_WORKSPACE_ROOT
+# TEST_WORKSPACE_ROOT:
+#   root directory shared by all tw workspaces
+#   default: $HOME/test_workspace
 : "${TEST_WORKSPACE_ROOT:=$HOME/test_workspace}"
 # }}}
 
-tw() {
-    # Here is a simple convention of the command format, which may not be followed strictly:
-    # tw [DATE] [INDEX] [ -m | --message "message" ] [ -M | --multi ] [ --git | --vcs ]
-    local ROOT="${TEST_WORKSPACE_ROOT:-$HOME/test_workspace}"
-    local date_arg=""
-    local index_arg=""
-    local multi=0
-    local vcs=0
-    local comment=""
+# {{{ TW_VCS_DEFAULT
+# TW_VCS_DEFAULT:
+#   whether new tw workspaces should run git init by default
+#   default: 1
+: "${TW_VCS_DEFAULT:=1}"
+# }}}
 
-    # arg parser
-    while [ $# -gt 0 ]; do
+# {{{ TW_DATE_LIMIT_MONTHS
+# TW_DATE_LIMIT_MONTHS:
+#   month window for short-date workspace matching
+#   default: 12
+: "${TW_DATE_LIMIT_MONTHS:=12}"
+# }}}
+
+# }}}
+
+_tw_date_comment_requested() {
+    local saw_date=0
+
+    while [ "$#" -gt 0 ]; do
         case "$1" in
-            -m|--multi) multi=1; shift ;;
-            --git|--vcs) vcs=1; shift ;;
-            today|yesterday|[0-9]*) if [ -z "$date_arg" ]; then
-                date_arg="$1"; shift; continue
-            fi ;;&
-            [0-9]*) if [ -z "$date_arg" ]; then
-                echo -e "${RED}${BOLD}[ERROR] Date argument must be set before index argument.${NC}"
+            --vcs|--git|--no-vcs|--no-git)
+                shift
+                ;;
+            comment|-c|--comment|--message)
+                [ "$saw_date" -eq 1 ] && return 0
                 return 1
-            fi
-            index_arg="$1"; shift ;;
-            -c|--comment|--message) if [ $# -lt 2 ]; then
-                echo -e "${RED}${BOLD}[ERROR] $1 requires an argument.${NC}"
+                ;;
+            -*)
                 return 1
-            fi
-            comment="$2"; shift 2 ;;
-            *) echo -e "${RED}${BOLD}[ERROR] Unknown argument: $1${NC}"; return 1 ;;
+                ;;
+            *)
+                saw_date=1
+                shift
+                ;;
         esac
     done
 
-    # debug
-    echo "date_arg: $date_arg"
-    echo "index_arg: $index_arg"
-    echo "multi: $multi"
-    echo "vcs: $vcs"
-    echo "comment: $comment"
+    return 1
+}
+
+tw() {
+    local dir cmd utils_dir
+    local -a tw_cmd
+
+    utils_dir="${__BASH_DOTFILES_DIR:-$(cd -P "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+    tw_cmd=("$utils_dir/utils/tw.sh")
+    tw_cmd=(env \
+        "TEST_WORKSPACE_ROOT=$TEST_WORKSPACE_ROOT" \
+        "TW_VCS_DEFAULT=$TW_VCS_DEFAULT" \
+        "TW_DATE_LIMIT_MONTHS=$TW_DATE_LIMIT_MONTHS" \
+        "${tw_cmd[@]}")
+    cmd="${1:-}"
+
+    case "$cmd" in
+        -h|--help|ls|list|path|root)
+            "${tw_cmd[@]}" "$@"
+            ;;
+        comment)
+            dir="$("${tw_cmd[@]}" "$@")" || return
+            printf 'tw: %s\n' "$dir"
+            cd -- "$dir" || return
+            ;;
+        new|-m|--multi)
+            dir="$("${tw_cmd[@]}" "$@")" || return
+            printf 'tw: %s\n' "$dir"
+            cd -- "$dir" || return
+            ;;
+        *)
+            if _tw_date_comment_requested "$@"; then
+                "${tw_cmd[@]}" "$@"
+                return
+            fi
+
+            dir="$("${tw_cmd[@]}" "$@")" || return
+            printf 'tw: %s\n' "$dir"
+            cd -- "$dir" || return
+            ;;
+    esac
 }

@@ -38,6 +38,62 @@
 : "${PS_CONN_ORDER:=ssh,tty,vpn}"
 # }}}
 
+# {{{ PS_PATH_HEAD_COUNT
+# PS_PATH_HEAD_COUNT:
+#   number of leading path components kept by ps_path
+#   default: 2
+: "${PS_PATH_HEAD_COUNT:=2}"
+# }}}
+
+# {{{ PS_PATH_TAIL_COUNT
+# PS_PATH_TAIL_COUNT:
+#   number of trailing path components kept by ps_path
+#   default: 2
+: "${PS_PATH_TAIL_COUNT:=2}"
+# }}}
+
+# {{{ PS_PATH_ABBREV_LEN
+# PS_PATH_ABBREV_LEN:
+#   abbreviation length for middle path components
+#   default: 1
+: "${PS_PATH_ABBREV_LEN:=1}"
+# }}}
+
+# {{{ PS_TIME_FORMAT
+# PS_TIME_FORMAT:
+#   date(1) format used by ps_time
+#   default: %H:%M:%S
+: "${PS_TIME_FORMAT:=%H:%M:%S}"
+# }}}
+
+# {{{ PS_DATE_FORMAT
+# PS_DATE_FORMAT:
+#   date(1) format used by ps_date
+#   default: %F
+: "${PS_DATE_FORMAT:=%F}"
+# }}}
+
+# {{{ PS_CHAR_USER
+# PS_CHAR_USER:
+#   prompt character for non-root shells
+#   default: $
+: "${PS_CHAR_USER:=\$}"
+# }}}
+
+# {{{ PS_CHAR_ROOT
+# PS_CHAR_ROOT:
+#   prompt character for root shells
+#   default: #
+: "${PS_CHAR_ROOT:=#}"
+# }}}
+
+# {{{ PS_SEPARATOR
+# PS_SEPARATOR:
+#   generic separator printed by ps_sep
+#   default: one space
+: "${PS_SEPARATOR:= }"
+# }}}
+
 # }}}
 
 # {{{ User & Host
@@ -247,61 +303,278 @@ ps_conn() {
   fi
 }
 # }}}
-# ps_root_prompt() { # TODO: show '#' if root, else '' }
+# {{{ ps_root_prompt
+ps_root_prompt() {
+    local uid="${EUID:-$(id -u 2>/dev/null)}"
+
+    [ "$uid" = "0" ] || return 0
+    printf '#\n'
+}
+# }}}
 # }}}
 
 # {{{ Path & Environment
-# ps_path() { # TODO: shortened PWD via path_prompt_generate }
-# ps_chroot() { # TODO: detect chroot/container marker }
-# ps_venv() { # TODO: python venv/conda }
+# {{{ ps_path
+ps_path() {
+    path_prompt_generate "${1:-$PWD}"
+}
+# }}}
+
+# {{{ ps_chroot
+ps_chroot() {
+    local chroot=""
+
+    if [ -n "${debian_chroot:-}" ]; then
+        chroot="$debian_chroot"
+    elif [ -r /etc/debian_chroot ]; then
+        chroot="$(sed -n '1p' /etc/debian_chroot 2>/dev/null)"
+    fi
+
+    [ -n "$chroot" ] || return 0
+    printf '%s\n' "$chroot"
+}
+# }}}
+
+# {{{ ps_venv
+ps_venv() {
+    local env_name=""
+
+    if [ -n "${VIRTUAL_ENV:-}" ]; then
+        env_name="${VIRTUAL_ENV##*/}"
+    elif [ -n "${CONDA_DEFAULT_ENV:-}" ]; then
+        env_name="$CONDA_DEFAULT_ENV"
+    fi
+
+    [ -n "$env_name" ] || return 0
+    printf '%s\n' "$env_name"
+}
+# }}}
+
 # ps_lang() { # TODO: language version (node/go/ruby/rust/etc.) }
 # ps_kube() { # TODO: kubectl context/namespace }
 # ps_tf() { # TODO: terraform workspace }
 # }}}
 
 # {{{ VCS & Project
-# ps_git() { # TODO: git branch/status }
+# {{{ ps_git
+ps_git() {
+    local branch state=""
+
+    command -v git >/dev/null 2>&1 || return 0
+    git rev-parse --is-inside-work-tree >/dev/null 2>&1 || return 0
+
+    branch="$(git symbolic-ref --quiet --short HEAD 2>/dev/null \
+        || git rev-parse --short HEAD 2>/dev/null)" || return 0
+    [ -n "$branch" ] || return 0
+
+    git diff --quiet --ignore-submodules -- 2>/dev/null || state="${state}*"
+    git diff --cached --quiet --ignore-submodules -- 2>/dev/null || state="${state}+"
+    if [ -n "$(git ls-files --others --exclude-standard 2>/dev/null | sed -n '1p')" ]; then
+        state="${state}?"
+    fi
+
+    printf '%s%s\n' "$branch" "$state"
+}
+# }}}
+
 # ps_hg() { # TODO: hg branch/status }
 # ps_svn() { # TODO: svn info }
 # ps_pkg() { # TODO: project/package version }
 # }}}
 
 # {{{ System & Status
-# ps_status() { # TODO: exit code of last command }
-# ps_jobs() { # TODO: background job count }
-# ps_load() { # TODO: load average }
-# ps_mem() { # TODO: memory usage }
+# {{{ ps_status
+ps_status() {
+    local status=$?
+
+    [ "$#" -gt 0 ] && status="$1"
+    [ "$status" = "0" ] && return 0
+    printf '%s\n' "$status"
+}
+# }}}
+
+# {{{ ps_jobs
+ps_jobs() {
+    local count
+
+    count="$(jobs -p 2>/dev/null | wc -l)" || return 0
+    count="${count//[[:space:]]/}"
+    [ "${count:-0}" -gt 0 ] || return 0
+    printf '%s\n' "$count"
+}
+# }}}
+
+# {{{ ps_load
+ps_load() {
+    if [ -r /proc/loadavg ]; then
+        awk '{print $1}' /proc/loadavg 2>/dev/null
+    else
+        uptime 2>/dev/null | awk -F'load averages?: ' '{print $2}' | awk -F', ' '{print $1}'
+    fi
+}
+# }}}
+
+# {{{ ps_mem
+ps_mem() {
+    if [ -r /proc/meminfo ]; then
+        awk '
+            /^MemTotal:/ { total = $2 }
+            /^MemAvailable:/ { available = $2 }
+            /^MemFree:/ { free = $2 }
+            /^Buffers:/ { buffers = $2 }
+            /^Cached:/ { cached = $2 }
+            /^SReclaimable:/ { sreclaimable = $2 }
+            /^Shmem:/ { shmem = $2 }
+            END {
+                if (available <= 0) {
+                    available = free + buffers + cached + sreclaimable - shmem
+                }
+                if (total > 0 && available > 0) {
+                    printf "%d%%\n", ((total - available) * 100) / total
+                }
+            }
+        ' /proc/meminfo 2>/dev/null
+    elif command -v free >/dev/null 2>&1; then
+        free -m 2>/dev/null | awk '/^Mem:/ && $2 > 0 { printf "%d%%\n", ($3 * 100) / $2 }'
+    fi
+}
+# }}}
+
 # ps_battery() { # TODO: battery info }
 # ps_temp() { # TODO: cpu/gpu temperature }
-# ps_uptime() { # TODO: uptime }
+# {{{ ps_uptime
+ps_uptime() {
+    local seconds days hours minutes
+
+    if [ -r /proc/uptime ]; then
+        seconds="$(awk '{printf "%d", $1}' /proc/uptime 2>/dev/null)" || return 0
+        days=$((seconds / 86400))
+        hours=$(((seconds % 86400) / 3600))
+        minutes=$(((seconds % 3600) / 60))
+
+        if [ "$days" -gt 0 ]; then
+            printf '%dd%dh\n' "$days" "$hours"
+        elif [ "$hours" -gt 0 ]; then
+            printf '%dh%02dm\n' "$hours" "$minutes"
+        else
+            printf '%dm\n' "$minutes"
+        fi
+    else
+        uptime -p 2>/dev/null | sed 's/^up //'
+    fi
+}
+# }}}
+
 # ps_net() { # TODO: IP/wifi/vpn info }
 # }}}
 
 # {{{ Time & Session
-# ps_time() { # TODO: current time }
-# ps_date() { # TODO: current date }
+# {{{ ps_time
+ps_time() {
+    date +"${PS_TIME_FORMAT:-%H:%M:%S}"
+}
+# }}}
+
+# {{{ ps_date
+ps_date() {
+    date +"${PS_DATE_FORMAT:-%F}"
+}
+# }}}
+
 # ps_timer() { # TODO: elapsed time since last command }
-# ps_hist() { # TODO: history number }
+# {{{ ps_hist
+ps_hist() {
+    [ -n "${HISTCMD:-}" ] || return 0
+    printf '%s\n' "$HISTCMD"
+}
+# }}}
 # }}}
 
 # {{{ Decorations
-# ps_char() { # TODO: prompt character }
-# ps_sep() { # TODO: separator symbol }
-# ps_newline() { # TODO: newline in PS1 }
-# ps_color() { # TODO: handle ANSI color codes safely }
+# {{{ ps_char
+ps_char() {
+    local uid="${EUID:-$(id -u 2>/dev/null)}"
+
+    if [ "$uid" = "0" ]; then
+        printf '%s\n' "$PS_CHAR_ROOT"
+    else
+        printf '%s\n' "$PS_CHAR_USER"
+    fi
+}
+# }}}
+
+# {{{ ps_sep
+ps_sep() {
+    printf '%s\n' "$PS_SEPARATOR"
+}
+# }}}
+
+# {{{ ps_newline
+ps_newline() {
+    printf '\\n'
+}
+# }}}
+
+# {{{ ps_color
+_ps_color_value() {
+    local name="${1^^}"
+
+    case "$name" in
+        BLACK|RED|GREEN|YELLOW|BLUE|MAGENTA|CYAN|WHITE|GRAY)
+            printf '%s' "${!name-}"
+            ;;
+        BRIGHT_BLACK|BRIGHT_RED|BRIGHT_GREEN|BRIGHT_YELLOW)
+            printf '%s' "${!name-}"
+            ;;
+        BRIGHT_BLUE|BRIGHT_MAGENTA|BRIGHT_CYAN|BRIGHT_WHITE)
+            printf '%s' "${!name-}"
+            ;;
+        BG_BLACK|BG_RED|BG_GREEN|BG_YELLOW|BG_BLUE|BG_MAGENTA|BG_CYAN|BG_WHITE)
+            printf '%s' "${!name-}"
+            ;;
+        BG_BRIGHT_BLACK|BG_BRIGHT_RED|BG_BRIGHT_GREEN|BG_BRIGHT_YELLOW)
+            printf '%s' "${!name-}"
+            ;;
+        BG_BRIGHT_BLUE|BG_BRIGHT_MAGENTA|BG_BRIGHT_CYAN|BG_BRIGHT_WHITE)
+            printf '%s' "${!name-}"
+            ;;
+        BOLD|DIM|UNDERLINE|RESET|NC|BG_RESET)
+            printf '%s' "${!name-}"
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
+ps_color() {
+    local name value
+
+    [ "$#" -gt 0 ] || set -- reset
+    for name in "$@"; do
+        value="$(_ps_color_value "$name")" || return
+        [ -n "$value" ] || continue
+        printf '\\[%s\\]' "$value"
+    done
+}
+# }}}
 # }}}
 
 
 
 # {{{ path_prompt_generate
 path_prompt_generate() {
-  local fullpath="$PWD"
+  local fullpath="${1:-$PWD}"
   local IFS='/'
   read -ra parts <<< "$fullpath"
 
-  local HEAD_COUNT=2         # 头部完整保留的目录数量
-  local TAIL_COUNT=2         # 尾部完整保留的目录数量
-  local ABBREV_LEN=1         # 中间目录缩写保留几个字母
+  local HEAD_COUNT="${PS_PATH_HEAD_COUNT:-2}"     # 头部完整保留的目录数量
+  local TAIL_COUNT="${PS_PATH_TAIL_COUNT:-2}"     # 尾部完整保留的目录数量
+  local ABBREV_LEN="${PS_PATH_ABBREV_LEN:-1}"     # 中间目录缩写保留几个字母
+
+  [[ "$HEAD_COUNT" =~ ^[0-9]+$ ]] || HEAD_COUNT=2
+  [[ "$TAIL_COUNT" =~ ^[0-9]+$ ]] || TAIL_COUNT=2
+  [[ "$ABBREV_LEN" =~ ^[0-9]+$ ]] || ABBREV_LEN=1
 
   local total=${#parts[@]}
   local result=""

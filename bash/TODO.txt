@@ -56,33 +56,33 @@ unblocks other cleanup.
 
 Start with the prompt helpers that are most useful day to day:
 
-- [ ] `ps_path`: shortened current directory display
-- [ ] `ps_git`: git branch/status
-- [ ] `ps_status`: previous command exit status
-- [ ] `ps_venv`: Python venv/conda indicator
+- [x] `ps_path`: shortened current directory display
+- [x] `ps_git`: git branch/status
+- [x] `ps_status`: previous command exit status
+- [x] `ps_venv`: Python venv/conda indicator
 
 Then consider the rest as needed:
 
-- [ ] `ps_root_prompt`: root/user prompt marker
-- [ ] `ps_chroot`: chroot/container marker
+- [x] `ps_root_prompt`: root/user prompt marker
+- [x] `ps_chroot`: chroot/container marker
 - [ ] `ps_lang`: language/runtime versions
 - [ ] `ps_kube`: Kubernetes context/namespace
 - [ ] `ps_tf`: Terraform workspace
 - [ ] `ps_hg`: Mercurial branch/status
 - [ ] `ps_svn`: SVN info
 - [ ] `ps_pkg`: project/package version
-- [ ] `ps_jobs`: background job count
-- [ ] `ps_load`: load average
-- [ ] `ps_mem`: memory usage
+- [x] `ps_jobs`: background job count
+- [x] `ps_load`: load average
+- [x] `ps_mem`: memory usage
 - [ ] `ps_battery`: battery info
 - [ ] `ps_temp`: CPU/GPU temperature
-- [ ] `ps_uptime`: uptime
+- [x] `ps_uptime`: uptime
 - [ ] `ps_net`: IP/wifi/vpn info
-- [ ] `ps_time`: current time
-- [ ] `ps_date`: current date
+- [x] `ps_time`: current time
+- [x] `ps_date`: current date
 - [ ] `ps_timer`: elapsed time since last command
-- [ ] `ps_hist`: history number
-- [ ] `ps_char`: prompt character
-- [ ] `ps_sep`: separator symbol
-- [ ] `ps_newline`: newline in PS1
-- [ ] `ps_color`: safe ANSI color handling
+- [x] `ps_hist`: history number
+- [x] `ps_char`: prompt character
+- [x] `ps_sep`: separator symbol
+- [x] `ps_newline`: newline in PS1
+- [x] `ps_color`: safe ANSI color handling

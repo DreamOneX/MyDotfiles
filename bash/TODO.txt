@@ -1,0 +1,88 @@
+# Bash Dotfiles TODO
+
+This file tracks the practical repair order for the current Bash dotfiles.
+Priority is based on daily shell impact, known breakage, and whether a task
+unblocks other cleanup.
+
+## P0 - Startup And Foundation
+
+- [x] Fix inaccurate `shopt` warning messages.
+      Source: `bashrc`
+
+- [ ] Investigate and fix the zoxide hook error.
+      Source: `bashrc`
+
+- [x] Clean up the color backend in `utils/shell-colors.sh`.
+      Include:
+      - implement `COLOR_BACKEND`
+      - improve truecolor detection
+      - handle `tput` fallback to ANSI when partial capabilities are missing
+      - improve `COLOR_COMPAT_MODE`
+      - decide the `WHITE` mapping strategy
+      - document `RGB()` and `RGB_BG()`
+
+## P1 - Known Broken Or Incomplete Tools
+
+- [ ] Fix `manbat`.
+      Source: `functions.sh`
+
+- [ ] Decide whether to set `MANPAGER=manbat` after `manbat` is fixed.
+      Source: `bashrc`
+
+- [ ] Make the `skp` configuration section functional.
+      Source: `func/skp.sh`
+
+- [ ] Rework `skp` package-manager detection into groups and preferences.
+      Source: `func/skp.sh`
+
+## P2 - Useful Feature Completion
+
+- [ ] Implement `wan_ipv4` and `wan_ipv6` in prompt host info.
+      Prefer reusing `utils/get_ip.sh`.
+      Source: `func/ps_info.sh`
+
+- [ ] Build the `tw` test workspace manager.
+      Consider using `utils/argparser.sh` for its CLI parsing.
+      Source: `func/tw.sh`
+
+- [ ] Design a lightweight temp manager.
+      Reuse or extend the existing `tmpd` idea.
+      Source: `bashrc` / `functions.sh`
+
+- [ ] Resolve the intended relationship between `env-opts.sh` and `.profile`.
+      Source: `env-opts.sh`
+
+## P3 - Prompt Backlog
+
+Start with the prompt helpers that are most useful day to day:
+
+- [ ] `ps_path`: shortened current directory display
+- [ ] `ps_git`: git branch/status
+- [ ] `ps_status`: previous command exit status
+- [ ] `ps_venv`: Python venv/conda indicator
+
+Then consider the rest as needed:
+
+- [ ] `ps_root_prompt`: root/user prompt marker
+- [ ] `ps_chroot`: chroot/container marker
+- [ ] `ps_lang`: language/runtime versions
+- [ ] `ps_kube`: Kubernetes context/namespace
+- [ ] `ps_tf`: Terraform workspace
+- [ ] `ps_hg`: Mercurial branch/status
+- [ ] `ps_svn`: SVN info
+- [ ] `ps_pkg`: project/package version
+- [ ] `ps_jobs`: background job count
+- [ ] `ps_load`: load average
+- [ ] `ps_mem`: memory usage
+- [ ] `ps_battery`: battery info
+- [ ] `ps_temp`: CPU/GPU temperature
+- [ ] `ps_uptime`: uptime
+- [ ] `ps_net`: IP/wifi/vpn info
+- [ ] `ps_time`: current time
+- [ ] `ps_date`: current date
+- [ ] `ps_timer`: elapsed time since last command
+- [ ] `ps_hist`: history number
+- [ ] `ps_char`: prompt character
+- [ ] `ps_sep`: separator symbol
+- [ ] `ps_newline`: newline in PS1
+- [ ] `ps_color`: safe ANSI color handling

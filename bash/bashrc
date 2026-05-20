@@ -200,5 +200,3 @@ source "$SCRIPT_DIR/aliases.sh"
 bind -m vi-insert -x '"\eh": run-help'
 bind -m emacs -x     '"\eh": run-help'
 # }}}
-
-# TODO: temp manager

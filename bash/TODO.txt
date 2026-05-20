@@ -45,7 +45,7 @@ unblocks other cleanup.
       Consider using `utils/argparser.sh` for its CLI parsing.
       Source: `func/tw.sh`
 
-- [ ] Design a lightweight temp manager.
+- [x] Design a lightweight temp manager.
       Reuse or extend the existing `tmpd` idea.
       Source: `bashrc` / `functions.sh`
 

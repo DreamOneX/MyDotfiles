@@ -97,9 +97,25 @@ mkcd() {
 
 # {{{ tmpd
 tmpd() {
-    local dir
-    dir=$(mktemp -d "${TMPDIR:-/tmp}/tmpd.XXXXXX") && echo "Created temporary directory: $dir"
-    cd "$dir" || return
+    local dir cmd
+    local -a tmpd_cmd
+
+    tmpd_cmd=("$__BASH_DOTFILES_DIR/utils/tmpd.sh")
+    if [ "${TMPD_ROOT+x}" ]; then
+        tmpd_cmd=(env "TMPD_ROOT=$TMPD_ROOT" "${tmpd_cmd[@]}")
+    fi
+    cmd="${1:-}"
+
+    case "$cmd" in
+        -h|--help|ls|list|path|rm|remove|delete|root)
+            "${tmpd_cmd[@]}" "$@"
+            ;;
+        *)
+            dir="$("${tmpd_cmd[@]}" "$@")" || return
+            printf 'tmpd: %s\n' "$dir"
+            cd -- "$dir" || return
+            ;;
+    esac
 }
 # }}}
 

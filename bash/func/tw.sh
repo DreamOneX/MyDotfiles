@@ -65,7 +65,7 @@ tw() {
     cmd="${1:-}"
 
     case "$cmd" in
-        -h|--help|ls|list|path|root)
+        -h|--help|help|ls|list|path|root)
             "${tw_cmd[@]}" "$@"
             ;;
         comment)

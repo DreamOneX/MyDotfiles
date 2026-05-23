@@ -16,6 +16,7 @@
 _tmpd_usage() {
   cat <<'EOF'
 Usage:
+  tmpd help         show this help
   tmpd [NAME]       create a new workspace and print its path
   tmpd new [NAME]   create a new workspace and print its path
   tmpd cd KEY       print the path for an existing workspace
@@ -28,6 +29,9 @@ Usage:
 Notes:
   The shell function changes directory for tmpd/new/cd/-.
   State is shared through TMPD_ROOT; no registry file is kept.
+
+Configuration:
+  TMPD_ROOT         workspace root, default ${TMPDIR:-/tmp}/tmpd-${USER:-uid}
 EOF
 }
 
@@ -167,7 +171,7 @@ _tmpd_rm() {
 
 main() {
   case "${1:-}" in
-    -h|--help)
+    -h|--help|help)
       _tmpd_usage
       ;;
     new)

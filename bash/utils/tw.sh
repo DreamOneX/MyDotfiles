@@ -33,6 +33,7 @@ shopt -s nullglob
 _tw_usage() {
   cat <<'EOF'
 Usage:
+  tw help                    show this help
   tw                         create or enter today's workspace
   tw DATE                    enter an existing workspace by date
   tw new [DATE] [comment MESSAGE] [--vcs|--no-vcs]
@@ -46,6 +47,26 @@ Usage:
 Notes:
   DATE is calendar-first. DATE never creates a workspace except through
   bare tw, tw new, or tw -m.
+
+Date inputs:
+  today, yesterday, YYYYMMDD, YYMMDD, MMDD, DD
+  Short dates are matched against existing tw workspaces with a bounded
+  fuzzy search before falling back to older exact calendar matches.
+
+Workspace names:
+  YYYYMMDD
+  YYYYMMDD_N
+  YYYYMMDD--comment-slug
+  YYYYMMDD_N--comment-slug
+
+Options:
+  --vcs, --git             run git init when creating a workspace
+  --no-vcs, --no-git       skip git init when creating a workspace
+
+Configuration:
+  TEST_WORKSPACE_ROOT      default $HOME/test_workspace
+  TW_VCS_DEFAULT           default 1
+  TW_DATE_LIMIT_MONTHS     default 12
 EOF
 }
 
@@ -715,7 +736,7 @@ _tw_parse_default_args() {
 
 main() {
   case "${1:-}" in
-    -h|--help)
+    -h|--help|help)
       _tw_usage
       ;;
     root)

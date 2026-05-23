@@ -107,7 +107,7 @@ tmpd() {
     cmd="${1:-}"
 
     case "$cmd" in
-        -h|--help|ls|list|path|rm|remove|delete|root)
+        -h|--help|help|ls|list|path|rm|remove|delete|root)
             "${tmpd_cmd[@]}" "$@"
             ;;
         *)

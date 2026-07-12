@@ -10,7 +10,9 @@ elif [ -v TERMUX_VERSION ] && [ -r "/data/data/com.termux/files/usr/share/bash-c
 elif [ -r "/usr/share/bash-completion/bash_completion" ]; then
     source "/usr/share/bash-completion/bash_completion"
 else
-    echo -e "${YELLOW}${BOLD}[WARN] bash-completion not found. bash-completion unavailable.${NC}"
+    if ! declare -F bash_notify_should_show >/dev/null 2>&1 || bash_notify_should_show external.bash_completion.missing; then
+        echo -e "${YELLOW}${BOLD}[WARN] bash-completion not found. bash-completion unavailable.${NC}"
+    fi
 fi
 # }}}
 
@@ -18,7 +20,9 @@ fi
 if command -v fzf >/dev/null 2>&1; then
     eval "$(fzf --bash)"
 else
-    echo -e "${YELLOW}${BOLD}[WARN] fzf not found. fzf unavailable.${NC}"
+    if ! declare -F bash_notify_should_show >/dev/null 2>&1 || bash_notify_should_show external.fzf.missing; then
+        echo -e "${YELLOW}${BOLD}[WARN] fzf not found. fzf unavailable.${NC}"
+    fi
 fi
 # }}}
 
@@ -26,6 +30,8 @@ fi
 if command -v zoxide >/dev/null 2>&1; then
     eval "$(zoxide init bash)"
 else
-    echo -e "${YELLOW}${BOLD}[WARN] zoxide not found. zoxide unavailable.${NC}"
+    if ! declare -F bash_notify_should_show >/dev/null 2>&1 || bash_notify_should_show external.zoxide.missing; then
+        echo -e "${YELLOW}${BOLD}[WARN] zoxide not found. zoxide unavailable.${NC}"
+    fi
 fi
 # }}}

@@ -1,5 +1,22 @@
 # vim:ft=bash:foldmethod=marker
 
+# {{{ notify
+if ! declare -F bash_notify_should_show >/dev/null 2>&1; then
+    _ALIASES_DIR="${SCRIPT_DIR:-$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
+    [ -r "$_ALIASES_DIR/utils/notify.sh" ] && source "$_ALIASES_DIR/utils/notify.sh"
+    unset _ALIASES_DIR
+fi
+
+_alias_notify_should_show() {
+    if declare -F bash_notify_should_show >/dev/null 2>&1; then
+        bash_notify_should_show "${1:-}" "${2:-${BASH_NOTIFY_DEFAULT_LIMIT:-3}}"
+        return $?
+    fi
+
+    return 0
+}
+# }}}
+
 # {{{ dots cd
 alias ..='cd ..'
 alias ...='cd ../..'
@@ -15,10 +32,14 @@ alias fgrep='grep -irlF'
 if command -v rg >/dev/null 2>&1; then
     alias afind='rg -il'
 elif command -v ack >/dev/null 2>&1; then
-    echo -e "${YELLOW}${BOLD}[WARN] rg not found, but ack founded. afind falling back to ack${NC}"
+    if _alias_notify_should_show aliases.afind.ack; then
+        echo -e "${YELLOW}${BOLD}[WARN] rg not found, but ack founded. afind falling back to ack${NC}"
+    fi
     alias afind='ack -il'
 else
-    echo -e "${YELLOW}${BOLD}[WARN] rg/ack not found. afind falling back to grep.${NC}"
+    if _alias_notify_should_show aliases.afind.grep; then
+        echo -e "${YELLOW}${BOLD}[WARN] rg/ack not found. afind falling back to grep.${NC}"
+    fi
     alias afind='grep -irl'
 fi
 # }}}
@@ -58,7 +79,9 @@ if command -v git >/dev/null 2>&1; then
     alias grba='git rebase --abort'
     alias grbs='git rebase --skip'
 else
-    echo -e "${YELLOW}${BOLD}[WARN] git not found. Git aliases unavailable.${NC}"
+    if _alias_notify_should_show aliases.git.missing; then
+        echo -e "${YELLOW}${BOLD}[WARN] git not found. Git aliases unavailable.${NC}"
+    fi
 fi
 # }}}
 
@@ -66,19 +89,27 @@ fi
 if command -v noglob >/dev/null 2>&1; then
     alias globurl='noglob urlglobber '
 else
-    echo -e "${YELLOW}${BOLD}[WARN] noglob not found. globurl unavailable.${NC}"
+    if _alias_notify_should_show aliases.noglob.missing; then
+        echo -e "${YELLOW}${BOLD}[WARN] noglob not found. globurl unavailable.${NC}"
+    fi
 fi
 # }}}
 
 # {{{ ls
 if command -v exa >/dev/null 2>&1; then
     if command -v eza >/dev/null 2>&1 ; then
-        echo -e "${YELLOW}${BOLD}[WARN] both exa and eza found. man, what can i say? eza will be used normally${NC}"
+        if _alias_notify_should_show aliases.eza.exa_both; then
+            echo -e "${YELLOW}${BOLD}[WARN] both exa and eza found. man, what can i say? eza will be used normally${NC}"
+        fi
     else
-        echo -e "${YELLOW}${BOLD}[WARN] exa found, though eza is not installed. exa will be used as eza. some compatibility issues may be caused.${NC}"
+        if _alias_notify_should_show aliases.eza.exa_compat; then
+            echo -e "${YELLOW}${BOLD}[WARN] exa found, though eza is not installed. exa will be used as eza. some compatibility issues may be caused.${NC}"
+        fi
         alias eza='exa'
     fi
-    echo -e "${BLUE}${BOLD}[INFO] eza is a fork of exa, serving as its maintained successor${NC}"
+    if _alias_notify_should_show aliases.eza.info; then
+        echo -e "${BLUE}${BOLD}[INFO] eza is a fork of exa, serving as its maintained successor${NC}"
+    fi
 fi
 
 if command -v eza >/dev/null 2>&1 ; then
@@ -99,11 +130,15 @@ if command -v eza >/dev/null 2>&1 ; then
     alias llst='tree -Csh'
     alias lllst='tree -pCsh'
   else
-    echo -e "${YELLOW}${BOLD}[WARN] tree not found, though eza is installed. llst/lllst disabled. please use lst for tree-style view${NC}"
+    if _alias_notify_should_show aliases.tree.eza_missing; then
+        echo -e "${YELLOW}${BOLD}[WARN] tree not found, though eza is installed. llst/lllst disabled. please use lst for tree-style view${NC}"
+    fi
   fi
 
 else
-  echo -e "${YELLOW}${BOLD}[WARN] eza not found. Falling back to ls.${NC}"
+  if _alias_notify_should_show aliases.eza.missing; then
+    echo -e "${YELLOW}${BOLD}[WARN] eza not found. Falling back to ls.${NC}"
+  fi
 
   alias ls='ls --color=auto'
   alias l='ls -lah'
@@ -121,7 +156,9 @@ else
     alias lst='tree -Csh'
     alias llst='tree -pCsh'
   else
-    echo -e "${YELLOW}${BOLD}[WARN] tree not found. lst/llst disabled.${NC}"
+    if _alias_notify_should_show aliases.tree.missing; then
+        echo -e "${YELLOW}${BOLD}[WARN] tree not found. lst/llst disabled.${NC}"
+    fi
   fi
 fi
 # }}}
@@ -131,7 +168,9 @@ if command -v bat >/dev/null 2>&1; then
     alias cat='bat -pp'
     alias lcat='/bin/cat'
 else
-    echo -e "${YELLOW}${BOLD}[WARN] bat not found. Falling back to cat.${NC}"
+    if _alias_notify_should_show aliases.bat.missing; then
+        echo -e "${YELLOW}${BOLD}[WARN] bat not found. Falling back to cat.${NC}"
+    fi
 fi
 # }}}
 
@@ -139,7 +178,9 @@ fi
 if command -v fd >/dev/null 2>&1; then
     alias fd='fd -HI'
 else
-    echo -e "${YELLOW}${BOLD}[WARN] fd not found. fd unavailable.${NC}"
+    if _alias_notify_should_show aliases.fd.missing; then
+        echo -e "${YELLOW}${BOLD}[WARN] fd not found. fd unavailable.${NC}"
+    fi
 fi
 # }}}
 
@@ -147,7 +188,9 @@ fi
 if command -v gh >/dev/null 2>&1; then
     alias ghcs='gh copilot suggest'
 else
-    echo -e "${YELLOW}${BOLD}[WARN] gh not found. gh aliases unavailable.${NC}"
+    if _alias_notify_should_show aliases.gh.missing; then
+        echo -e "${YELLOW}${BOLD}[WARN] gh not found. gh aliases unavailable.${NC}"
+    fi
 fi
 # }}}
 
@@ -155,7 +198,9 @@ fi
 if command -v todo.sh >/dev/null 2>&1; then
     alias t='todo.sh'
 else
-    echo -e "${YELLOW}${BOLD}[WARN] todo.sh not found. todo aliases unavailable.${NC}"
+    if _alias_notify_should_show aliases.todo_sh.missing; then
+        echo -e "${YELLOW}${BOLD}[WARN] todo.sh not found. todo aliases unavailable.${NC}"
+    fi
 fi
 # }}}
 

@@ -14,7 +14,12 @@ while [ -h "$SOURCE" ]; do
 done
 SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
 
+if grep -qi microsoft /proc/sys/kernel/osrelease 2>/dev/null; then
+  export COLORTERM=truecolor
+fi
+
 source $SCRIPT_DIR/utils/shell-colors.sh
+source $SCRIPT_DIR/utils/notify.sh
 
 # }}}
 
@@ -128,22 +133,34 @@ export GPG_TTY=$(tty)
 if command -v nvim >/dev/null 2>&1; then
     export EDITOR='nvim'
 elif command -v vim >/dev/null 2>&1; then
-    echo -e "${YELLOW}${BOLD}[WARN] nvim not found, but vim founded. EDITOR set to it${NC}"
+    if bash_notify_should_show bashrc.editor.vim; then
+        echo -e "${YELLOW}${BOLD}[WARN] nvim not found, but vim founded. EDITOR set to it${NC}"
+    fi
     export EDITOR='vim'
 elif command -v emacs>/dev/null 2>&1; then
-    echo -e "${YELLOW}${BOLD}[WARN] nvim/vim not found, but emacs founded. EDITOR set to it${NC}"
+    if bash_notify_should_show bashrc.editor.emacs; then
+        echo -e "${YELLOW}${BOLD}[WARN] nvim/vim not found, but emacs founded. EDITOR set to it${NC}"
+    fi
     export EDITOR='emacs'
 elif command -v micro >/dev/null 2>&1; then
-    echo -e "${YELLOW}${BOLD}[WARN] nvim/vim/emacs not found, but micro founded. EDITOR set to it${NC}"
+    if bash_notify_should_show bashrc.editor.micro; then
+        echo -e "${YELLOW}${BOLD}[WARN] nvim/vim/emacs not found, but micro founded. EDITOR set to it${NC}"
+    fi
     export EDITOR='micro'
 elif command -v nano >/dev/null 2>&1; then
-    echo -e "${YELLOW}${BOLD}[WARN] nvim/vim/emacs/micro not found, but nano founded. EDITOR set to it${NC}"
+    if bash_notify_should_show bashrc.editor.nano; then
+        echo -e "${YELLOW}${BOLD}[WARN] nvim/vim/emacs/micro not found, but nano founded. EDITOR set to it${NC}"
+    fi
     export EDITOR='nano'
 elif command -v vi >/dev/null 2>&1; then
-    echo -e "${YELLOW}${BOLD}[WARN] nvim/vim/emacs/micro/nano not found, but vi founded. EDITOR set to it${NC}"
+    if bash_notify_should_show bashrc.editor.vi; then
+        echo -e "${YELLOW}${BOLD}[WARN] nvim/vim/emacs/micro/nano not found, but vi founded. EDITOR set to it${NC}"
+    fi
     export EDITOR='vi'
 else
-    echo -e "${YELLOW}${BOLD}[WARN] nvim/vim/emacs/micro/nano/vi not found. EDITOR not set.${NC}"
+    if bash_notify_should_show bashrc.editor.missing; then
+        echo -e "${YELLOW}${BOLD}[WARN] nvim/vim/emacs/micro/nano/vi not found. EDITOR not set.${NC}"
+    fi
 fi
 # }}}
 
@@ -152,14 +169,20 @@ if [ -n "$DISPLAY" ] || [ -n "$WAYLAND_DISPLAY" ]; then
     if command -v neovide >/dev/null 2>&1; then
         export VISUAL='neovide'
     elif command -v code >/dev/null 2>&1; then
-        echo -e "${YELLOW}${BOLD}[WARN] neovide not found, but code founded. VISUAL set to it${NC}"
+        if bash_notify_should_show bashrc.visual.code; then
+            echo -e "${YELLOW}${BOLD}[WARN] neovide not found, but code founded. VISUAL set to it${NC}"
+        fi
         export VISUAL='code --wait'
     else
-        echo -e "${YELLOW}${BOLD}[WARN] neovide/code not found. VISUAL falling back to EDITOR${NC}"
+        if bash_notify_should_show bashrc.visual.editor; then
+            echo -e "${YELLOW}${BOLD}[WARN] neovide/code not found. VISUAL falling back to EDITOR${NC}"
+        fi
         export VISUAL="$EDITOR"
     fi
 else
-    echo -e "${YELLOW}${BOLD}[WARN] DISPLAY/WAYLAND_DISPLAY not set. VISUAL falling back to EDITOR, which is ${UNDERLINE}${EDITOR}${NC}"
+    if bash_notify_should_show bashrc.visual.no_display; then
+        echo -e "${YELLOW}${BOLD}[WARN] DISPLAY/WAYLAND_DISPLAY not set. VISUAL falling back to EDITOR, which is ${UNDERLINE}${EDITOR}${NC}"
+    fi
     export VISUAL="$EDITOR"
 fi
 # }}}

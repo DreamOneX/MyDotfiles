@@ -15,9 +15,16 @@ _BASH_DOTFILES_HAD_SCRIPT_DIR=0
 
 __BASH_DOTFILES_DIR="$_BASH_DOTFILES_DIR"
 
+_bash_dotfiles_is_wsl() {
+  grep -qi microsoft /proc/sys/kernel/osrelease 2>/dev/null
+}
+
 source "$_BASH_DOTFILES_DIR/func/skp.sh"
 source "$_BASH_DOTFILES_DIR/func/tw.sh"
 source "$_BASH_DOTFILES_DIR/func/ps_info.sh"
+if _bash_dotfiles_is_wsl && [ -r "$_BASH_DOTFILES_DIR/func/wsl.sh" ]; then
+  source "$_BASH_DOTFILES_DIR/func/wsl.sh"
+fi
 
 if [ "$_BASH_DOTFILES_HAD_SOURCE" -eq 1 ]; then
   SOURCE="$_BASH_DOTFILES_OLD_SOURCE"
@@ -40,6 +47,7 @@ fi
 unset _BASH_DOTFILES_DIR _BASH_DOTFILES_OLD_SOURCE _BASH_DOTFILES_OLD_DIR
 unset _BASH_DOTFILES_OLD_SCRIPT_DIR _BASH_DOTFILES_HAD_SOURCE
 unset _BASH_DOTFILES_HAD_DIR _BASH_DOTFILES_HAD_SCRIPT_DIR
+unset -f _bash_dotfiles_is_wsl
 # }}}
 
 # {{{ run-help
@@ -62,7 +70,9 @@ if command -v rsync >/dev/null 2>&1; then
     rsync -a --info=stats1,progress2 --partial --modify-window=1 --remove-source-files "$@"
   }
 else
-  echo -e "${YELLOW}${BOLD}[WARN] rsync not found. cpr/mvr unavailable.${NC}"
+  if ! declare -F bash_notify_should_show >/dev/null 2>&1 || bash_notify_should_show functions.rsync.missing; then
+    echo -e "${YELLOW}${BOLD}[WARN] rsync not found. cpr/mvr unavailable.${NC}"
+  fi
 fi
 # }}}
 
